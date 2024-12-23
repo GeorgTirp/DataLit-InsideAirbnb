@@ -12,11 +12,12 @@ Visualisation of results
 
 
 $\textbf{Forschungsfrage:}$
-Preis pro Nacht pro Person
-Chance of reservation in gewissem Zeitintervall
-Einfluss verschiedener Faktoren auf Preisgestaltung
-Eingrenzung auf wenige Städte
-Unterschiede bzgl. Wichtigkeit verschiedener Features im Städtevergleich / Jahreszeitvergleich
+
+- Preis pro Nacht pro Person
+- Chance of reservation in gewissem Zeitintervall
+- Einfluss verschiedener Faktoren auf Preisgestaltung
+- Eingrenzung auf wenige Städte
+- Unterschiede bzgl. Wichtigkeit verschiedener Features im Städtevergleich / Jahreszeitvergleich
 
 
 
