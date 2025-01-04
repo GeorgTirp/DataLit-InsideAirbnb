@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import os
+from copy import deepcopy
 
 PATH_TO_REPO = "C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy/DataLit-InsideAirbnb"
 RAW_DATA_DIR = PATH_TO_REPO + '/data/raw_data'
@@ -11,7 +12,7 @@ DEBUG_MODE = False # determines if preprocessing is in DEBUG_MODE (no processing
 
 
 #convert raw csv data for in city_list specified cities
-def collecting_data(city_list):
+def collecting_data_from_source(city_list):
     """ 
     Converts raw data in RAW_DATA_DIR to proper CSV file format for cities specified in CITY_LIST (see above for global settings).
     Converted files are saved in SAVING_DIR.
@@ -41,7 +42,14 @@ def collecting_data(city_list):
                 if file_name.endswith('.geojson'):
                     df = pd.read_json(file_path)  # Adjust based on the specific geojson handling
                 else:
-                    df = pd.read_csv(file_path, index_col=0)
+                    file_name_core = file_name.split(sep=".")[0]
+
+                    if file_name_core == "reviews":
+                        index_col = 1
+                    else:
+                        index_col = 0
+                        
+                    df = pd.read_csv(file_path, index_col=index_col)
 
                 #basename = file_name.split(sep=".")[0]
                 
@@ -50,6 +58,36 @@ def collecting_data(city_list):
     return data_dict
 
                 
+    print("preprocessing done")
+
+
+def integrating_into_one_df(data_dict):
+    cities = data_dict.keys()
+    cities_listings_with_region = []
+
+    data_dict = deepcopy(data_dict)
+
+    for city in cities:
+        print(f"collecting reviews for city: {city}")
+        city_listings = data_dict[city]["listings.csv"]
+        city_reviews = data_dict[city]["reviews.csv"]       
+        city_calendar = data_dict[city]["calendar.csv"] 
+
+        city_listings_indices = city_listings.index.to_list()
+        city_listings["comments"] = [[] for _ in range(len(city_listings))]
+
+        for index in city_listings_indices:
+            city_index_reviews = city_reviews[city_reviews["listing_id"] == index]
+            comments = city_index_reviews["comments"].to_list()
+            city_listings.at[index, 'comments'] = comments
+        
+        city_listings.insert(0, 'region', city)
+        cities_listings_with_region.append(city_listings)
+
+    print(f"integrate all city dataframes into one")
+    cities_listings_with_region = pd.concat(cities_listings_with_region, ignore_index=True)
+
+    return cities_listings_with_region           
     
 
 
@@ -60,8 +98,16 @@ def main():
 
 if __name__ == "__main__":
     if not DEBUG_MODE:
-        data_dict = collecting_data(CITY_LIST)
+        data_dict = collecting_data_from_source(CITY_LIST)
         print(f"collected data from {RAW_DATA_DIR} and stored in data dictionary")
+
+        cities_listings_with_region = integrating_into_one_df(data_dict)
+        print(f"integrated reviews into listing df and concatenated all city listings into one df")
+
+        saving_path_cities_listings = SAVING_DIR + '/cities_listings_with_region.csv'
+        cities_listings_with_region.to_csv(path_or_buf= saving_path_cities_listings)
+        print(f"saved dataframe with listings from all cities in {SAVING_DIR}")
+
     else:
         main()
 
