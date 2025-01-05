@@ -51,8 +51,6 @@ def collecting_data_from_source(city_list):
                         
                     df = pd.read_csv(file_path, index_col=index_col)
 
-                #basename = file_name.split(sep=".")[0]
-                
                 data_dict[city][file_name] = df
     
     return data_dict
@@ -61,7 +59,7 @@ def collecting_data_from_source(city_list):
     print("preprocessing done")
 
 
-def integrating_into_one_df(data_dict):
+def integrate_reviews_and_aggregate(data_dict):
     cities = data_dict.keys()
     cities_listings_with_region = []
 
@@ -79,7 +77,15 @@ def integrating_into_one_df(data_dict):
         for index in city_listings_indices:
             city_index_reviews = city_reviews[city_reviews["listing_id"] == index]
             comments = city_index_reviews["comments"].to_list()
-            city_listings.at[index, 'comments'] = comments
+
+            comments_with_newline = []
+            for comment in comments:
+                if type(comment) is float:
+                    comment = ""
+                comment_transformed = comment.replace('<br/>', '\n').replace('\r', '')
+                comments_with_newline.append(comment_transformed)
+
+            city_listings.at[index, 'comments'] = comments_with_newline
         
         city_listings.insert(0, 'region', city)
         cities_listings_with_region.append(city_listings)
@@ -101,7 +107,7 @@ if __name__ == "__main__":
         data_dict = collecting_data_from_source(CITY_LIST)
         print(f"collected data from {RAW_DATA_DIR} and stored in data dictionary")
 
-        cities_listings_with_region = integrating_into_one_df(data_dict)
+        cities_listings_with_region = integrate_reviews_and_aggregate(data_dict)
         print(f"integrated reviews into listing df and concatenated all city listings into one df")
 
         saving_path_cities_listings = SAVING_DIR + '/cities_listings_with_region.csv'
