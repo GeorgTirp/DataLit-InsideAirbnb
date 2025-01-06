@@ -5,8 +5,8 @@ from sklearn.metrics import mean_squared_error
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import r2_score
 from sklearn.model_selection import cross_val_score
-# regression.py
-from preprocessing.preprocessing import preprocess_data
+
+from preprocessing.preprocessing_test import preprocess_data
 from typing import Tuple, Dict
 
 
@@ -95,7 +95,19 @@ class RegressionModels:
         print(f"Random Forest 10-fold CV Mean R2 Score: {rf_cv_mean_score}")
         print(f"Linear Regression 10-fold CV Mean R2 Score: {linear_cv_mean_score}")
 
-        return linear_mse, linear_r2,  linear_cv_mean_score, rf_mse, rf_r2, rf_cv_mean_score
+        linear_metrics = {
+            'mse': linear_mse,
+            'r2': linear_r2,
+            'cv_mean_score': linear_cv_mean_score
+        }
+
+        rf_metrics = {
+            'mse': rf_mse,
+            'r2': rf_r2,
+            'cv_mean_score': rf_cv_mean_score
+        }
+
+        return linear_metrics, rf_metrics
     
     def feature_importance(self, top_n: int = 10) -> Tuple[Dict, Dict]:
         """ Return the feature importance for the Random Forest and linear model"""
