@@ -52,14 +52,12 @@ def collecting_data_from_source(city_list):
                     df = pd.read_csv(file_path, index_col=index_col)
 
                 data_dict[city][file_name] = df
-    
+
+    print(f"collected data from {RAW_DATA_DIR} and stored in data dictionary")
     return data_dict
 
-                
-    print("preprocessing done")
 
-
-def integrate_reviews_and_aggregate(data_dict):
+def integrate_reviews_and_aggregate_regions(data_dict):
     cities = data_dict.keys()
     cities_listings_with_region = []
 
@@ -92,8 +90,47 @@ def integrate_reviews_and_aggregate(data_dict):
 
     print(f"integrate all city dataframes into one")
     cities_listings_with_region = pd.concat(cities_listings_with_region, ignore_index=True)
+    print(f"integrated reviews into listing df and concatenated all city listings into one df")
 
-    return cities_listings_with_region           
+    return cities_listings_with_region  
+
+
+
+def add_comments_embedding(cities_listings_with_region):
+    comments_list = cities_listings_with_region["comments"].to_list()
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    
+    model_name = "bert-base-uncased"
+    tokenizer = tf.AutoTokenizer.from_pretrained(model_name, clean_up_tokenization_spaces=True)
+    model = tf.AutoModel.from_pretrained(model_name).to(device)
+    
+    comments_list_embedded = []
+    batch_size = 32
+    
+    for i, comments in enumerate(comments_list):
+        if i > 3:
+            break
+        dataloader = DataLoader(comments, batch_size=batch_size)
+        embeddings_list = []
+        
+        for batch in dataloader:
+            inputs = tokenizer(batch, padding=True, truncation=True, return_tensors="pt").to(device)
+            with torch.no_grad():
+                outputs = model(**inputs)
+            embeddings = outputs.last_hidden_state[:, 0, :]
+            embeddings = embeddings.squeeze(0).cpu().numpy()
+            embeddings_list.append(embeddings)
+        
+        embeddings_array = np.vstack(embeddings_list)
+        mean_pooled_embedding = np.mean(embeddings_array, axis=0)
+        print(len(mean_pooled_embedding))
+        comments_list_embedded.append(mean_pooled_embedding)
+        
+
+    cities_listings_with_region["comments_emb"] = comments_list_embedded
+
+    return cities_listings_with_region
+
     
 
 
@@ -105,10 +142,10 @@ def main():
 if __name__ == "__main__":
     if not DEBUG_MODE:
         data_dict = collecting_data_from_source(CITY_LIST)
-        print(f"collected data from {RAW_DATA_DIR} and stored in data dictionary")
+        
 
-        cities_listings_with_region = integrate_reviews_and_aggregate(data_dict)
-        print(f"integrated reviews into listing df and concatenated all city listings into one df")
+        cities_listings_with_region = integrate_reviews_and_aggregate_regions(data_dict)
+        cities_listings_with_region = add_comments_embedding(cities_listings_with_region)
 
         saving_path_cities_listings = SAVING_DIR + '/cities_listings_with_region.csv'
         cities_listings_with_region.to_csv(path_or_buf= saving_path_cities_listings)
