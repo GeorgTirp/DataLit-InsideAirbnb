@@ -2,154 +2,239 @@ import numpy as np
 import pandas as pd
 import os
 from copy import deepcopy
+import torch 
+import transformers as tf
+from torch.utils.data import DataLoader
+import json
+from tqdm import tqdm
+import sklearn
+from typing import Tuple, Dict 
 
 PATH_TO_REPO = "C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy/DataLit-InsideAirbnb"
 RAW_DATA_DIR = PATH_TO_REPO + '/data/raw_data'
 SAVING_DIR = PATH_TO_REPO + '/data/preprocessed_data'
 PROCESS_ALL_CITIES = True
 CITY_LIST   = ["berlin"] #list cities which should be processed if not PROCESS_ALL_CITIES
-DEBUG_MODE = False # determines if preprocessing is in DEBUG_MODE (no processing of file --> execution of main-function)
+DEBUG_MODE = True # determines if preprocessing is in DEBUG_MODE (no processing of file --> execution of main-function)
 
 
-#convert raw csv data for in city_list specified cities
-def collecting_data_from_source(city_list):
-    """ 
-    Converts raw data in RAW_DATA_DIR to proper CSV file format for cities specified in CITY_LIST (see above for global settings).
-    Converted files are saved in SAVING_DIR.
-    
-    """
-    print("initializing preprocessing")
-    cities_in_raw_data_dir = os.listdir(RAW_DATA_DIR)
 
-    if not PROCESS_ALL_CITIES and not set(CITY_LIST).issubset(cities_in_raw_data_dir):
-        raise ValueError("not all requested citys are in directory")
-    
-    data_dict = {}
-
-    if PROCESS_ALL_CITIES:
-        CITY_LIST = cities_in_raw_data_dir
-    
-    for city in CITY_LIST:
-        data_dict[city] = {}
-        city_dir = RAW_DATA_DIR + '/' + city
-        FILE_NAMES = [f for f in os.listdir(city_dir) if os.path.isfile(os.path.join(city_dir, f))]
-
-        for file_name in FILE_NAMES:
-            if file_name.endswith('.csv') or file_name.endswith('.geojson') or file_name.endswith('.csv.gz'):
-                file_path = os.path.join(city_dir, file_name)
+class InsideAirbnbDataset:
+    def __init__(
+            self,
+            path_to_repo: str = "C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy/DataLit-InsideAirbnb",
+            process_all_cities: bool = True,
+            cities_to_process: list   = ["berlin"]):
         
-                # Read the file into a DataFrame
-                if file_name.endswith('.geojson'):
-                    df = pd.read_json(file_path)  # Adjust based on the specific geojson handling
-                else:
-                    file_name_core = file_name.split(sep=".")[0]
+        self.path_to_repo = path_to_repo
+        self.process_all_cities = process_all_cities
+        self.cities_to_process = cities_to_process
 
-                    if file_name_core == "reviews":
-                        index_col = 1
+        self.raw_data_dir = path_to_repo + '/data/raw_data'
+        self.saving_dir = path_to_repo + '/data/preprocessed_data'
+
+        # read in raw data from raw data directory in repository
+        self.raw_data_dict = self._read_data_from_files()
+
+        # integrate the reviews from reviews df into the listings df for each city in the raw_data_dict
+        self._integrate_reviews_into_listings()
+
+        # aggregate all listings dfs from each city and store in one all_cities_listings df
+        self.all_cities_listings = self._aggregate_regional_listings_into_one_df()
+        
+    
+    def _read_data_from_files(self):
+        print(f"reading in data from {self.raw_data_dir}")
+        cities_in_raw_data_dir = os.listdir(self.raw_data_dir)
+
+        if not self.process_all_cities and not set(self.cities_to_process).issubset(cities_in_raw_data_dir):
+            raise ValueError("not all requested citys are in directory")
+        
+        raw_data_dict = {}
+
+        if self.process_all_cities:
+            self.cities_to_process = cities_in_raw_data_dir
+        
+        for city in self.cities_to_process:
+            print(f"collecting data for city: {city}")
+            raw_data_dict[city] = {}
+            city_dir = self.raw_data_dir + '/' + city
+            file_names = [f for f in os.listdir(city_dir) if os.path.isfile(os.path.join(city_dir, f))]
+
+            for file_name in file_names:
+                if file_name.endswith('.csv') or file_name.endswith('.geojson') or file_name.endswith('.csv.gz'):
+                    file_path = os.path.join(city_dir, file_name)
+            
+                    # Read the file into a DataFrame
+                    if file_name.endswith('.geojson'):
+                        df = pd.read_json(file_path)  # Adjust based on the specific geojson handling
                     else:
-                        index_col = 0
+                        file_name_core = file_name.split(sep=".")[0]
+
+                        if file_name_core == "reviews":
+                            index_col = 1
+                        else:
+                            index_col = 0
+                            
+                        df = pd.read_csv(file_path, index_col=index_col)
+
+                    raw_data_dict[city][file_name] = df
+
+        print(f"collecting data process done")
+
+        return raw_data_dict
+
+    def _integrate_reviews_into_listings(self):
+        print(f"initializing reviews collection process and integration into city listings")
+        cities = self.raw_data_dict.keys()
+
+        for city in cities:
+            print(f"current city: {city}")
+            city_listings = self.raw_data_dict[city]["listings.csv"]
+            city_reviews = self.raw_data_dict[city]["reviews.csv"]       
+            city_calendar = self.raw_data_dict[city]["calendar.csv"] 
+
+            city_listings_indices = city_listings.index.to_list()
+            city_listings["comments"] = [[] for _ in range(len(city_listings))]
+
+            for index in city_listings_indices:
+                city_index_reviews = city_reviews[city_reviews["listing_id"] == index]
+                comments = city_index_reviews["comments"].to_list()
+
+                comments_with_newline = []
+                for comment in comments:
+                    if type(comment) is float: #if it is nan, as nan are float values
+                        comment = ""
+                    comment_transformed = comment.replace('<br/>', '\n').replace('\r', '')
+                    comments_with_newline.append(comment_transformed)
+
+                city_listings.at[index, 'comments'] = comments_with_newline
+        
+        print("integration of reviews into cites listings done")
+
+    def _aggregate_regional_listings_into_one_df(self):
+        print("initializing aggregation of regional listings into one dataframe")
+        cities = self.raw_data_dict.keys()
+        all_cities_listings = []
+
+        for city in cities:
+            city_listings = self.raw_data_dict[city]["listings.csv"]
+            city_listings.insert(0, 'region', city)
+            all_cities_listings.append(city_listings)
+
+        all_cities_listings = pd.concat(all_cities_listings, ignore_index=True)
+        print("aggregation done")
+        return all_cities_listings
+
+
+    def add_nlp_embedding(self, 
+                          nlp_col_names = ['name', 'description', 'neighborhood_overview', 'host_about', 'amenities','comments'], 
+                          batch_size = 32):
+        print("initializing NLP embedding process")
+        print(f"batch size: {batch_size}") 
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        model_name = 'distilbert-base-multilingual-cased'
+        tokenizer = tf.AutoTokenizer.from_pretrained(model_name, clean_up_tokenization_spaces=True)
+        model = tf.AutoModel.from_pretrained(model_name).to(device)
+        print(f"embeddings are computed using transformer model: {model_name} from hugging face")
+        
+        for nlp_col_name in nlp_col_names:
+            print(f"current nlp column: {nlp_col_name}")
+
+            nlp_col = self.all_cities_listings[nlp_col_name]
+            nlp_col_list = []
+
+            # convert nlp columns to a list 
+            if nlp_col_name in ['name', 'description', 'neighborhood_overview', 'host_about', 'comments']:
+                nlp_col_list = nlp_col.fillna(value="").to_list()
+            elif nlp_col_name == "amenities":
+                for amenities_raw_entry in nlp_col:
+                    amenities_collection = json.loads(amenities_raw_entry) # amenities_raw_entry is in json string format
+                    nlp_col_list.append(amenities_collection)
+            else:
+                raise ValueError(f"no procedure found for converting {nlp_col_name} to list")
+            
+
+            nlp_col_list_embedded = []
+
+            pooling_approach = ['amenities', 'comments']
+            # for each entry in nlp column, single embeddings are inferred for amenity_items / single reviews --> then mean pooling
+            if nlp_col_name in pooling_approach:
+                for i, entry in enumerate(tqdm(nlp_col_list)):
+                    if entry == []:
+                        entry = np.asarray([" "])
                         
-                    df = pd.read_csv(file_path, index_col=index_col)
-
-                data_dict[city][file_name] = df
-
-    print(f"collected data from {RAW_DATA_DIR} and stored in data dictionary")
-    return data_dict
-
-
-def integrate_reviews_and_aggregate_regions(data_dict):
-    cities = data_dict.keys()
-    cities_listings_with_region = []
-
-    data_dict = deepcopy(data_dict)
-
-    for city in cities:
-        print(f"collecting reviews for city: {city}")
-        city_listings = data_dict[city]["listings.csv"]
-        city_reviews = data_dict[city]["reviews.csv"]       
-        city_calendar = data_dict[city]["calendar.csv"] 
-
-        city_listings_indices = city_listings.index.to_list()
-        city_listings["comments"] = [[] for _ in range(len(city_listings))]
-
-        for index in city_listings_indices:
-            city_index_reviews = city_reviews[city_reviews["listing_id"] == index]
-            comments = city_index_reviews["comments"].to_list()
-
-            comments_with_newline = []
-            for comment in comments:
-                if type(comment) is float:
-                    comment = ""
-                comment_transformed = comment.replace('<br/>', '\n').replace('\r', '')
-                comments_with_newline.append(comment_transformed)
-
-            city_listings.at[index, 'comments'] = comments_with_newline
+                    dataloader = DataLoader(entry, batch_size=batch_size)
+                    entry_items_embeddings_list = []
+                    
+                    for batch in dataloader:
+                        inputs = tokenizer(batch, padding=True, truncation=True, return_tensors="pt").to(device)
+                        with torch.no_grad():
+                            outputs = model(**inputs)
+                        embeddings = outputs.last_hidden_state[:, 0, :]
+                        embeddings = embeddings.squeeze(0).cpu().numpy()
+                        entry_items_embeddings_list.append(embeddings)
+                    
+                    embeddings_array = np.vstack(entry_items_embeddings_list)
+                    mean_pooled_embedding = np.mean(embeddings_array, axis=0)
+                    nlp_col_list_embedded.append(mean_pooled_embedding)
+                    
+            # embeddings are inferred directly for the entries of all other nlp columns
+            else:
+                dataloader = DataLoader(nlp_col_list, batch_size=batch_size)
+                for batch in tqdm(dataloader):
+                    inputs = tokenizer(batch, padding=True, truncation=True, return_tensors="pt").to(device)
+                    with torch.no_grad():
+                        outputs = model(**inputs)
+                    embeddings = outputs.last_hidden_state[:, 0, :]
+                    embeddings = embeddings.squeeze(0).cpu().numpy()
+                    nlp_col_list_embedded += list(embeddings)
+            
+            nlp_col_embedded_name = nlp_col_name + '_emb'
+            self.all_cities_listings[nlp_col_embedded_name] = nlp_col_list_embedded
         
-        city_listings.insert(0, 'region', city)
-        cities_listings_with_region.append(city_listings)
+        print("nlp embedding done")
 
-    print(f"integrate all city dataframes into one")
-    cities_listings_with_region = pd.concat(cities_listings_with_region, ignore_index=True)
-    print(f"integrated reviews into listing df and concatenated all city listings into one df")
-
-    return cities_listings_with_region  
-
-
-
-def add_comments_embedding(cities_listings_with_region):
-    comments_list = cities_listings_with_region["comments"].to_list()
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    
-    model_name = "bert-base-uncased"
-    tokenizer = tf.AutoTokenizer.from_pretrained(model_name, clean_up_tokenization_spaces=True)
-    model = tf.AutoModel.from_pretrained(model_name).to(device)
-    
-    comments_list_embedded = []
-    batch_size = 32
-    
-    for i, comments in enumerate(comments_list):
-        if i > 3:
-            break
-        dataloader = DataLoader(comments, batch_size=batch_size)
-        embeddings_list = []
+    def dimensionality_reduction(self, 
+                                 col_names = [
+                                    'name_emb', 
+                                    'description_emb', 
+                                    'neighborhood_overview_emb', 
+                                    'host_about_emb', 
+                                    'amenities_emb',
+                                    'comments_emb'
+                                 ],
+                                keep_variance = 0.95):
         
-        for batch in dataloader:
-            inputs = tokenizer(batch, padding=True, truncation=True, return_tensors="pt").to(device)
-            with torch.no_grad():
-                outputs = model(**inputs)
-            embeddings = outputs.last_hidden_state[:, 0, :]
-            embeddings = embeddings.squeeze(0).cpu().numpy()
-            embeddings_list.append(embeddings)
-        
-        embeddings_array = np.vstack(embeddings_list)
-        mean_pooled_embedding = np.mean(embeddings_array, axis=0)
-        print(len(mean_pooled_embedding))
-        comments_list_embedded.append(mean_pooled_embedding)
-        
+        print("initializing dimensionality reduction")
+            
+        for col_name in col_names:
+            print(f"current embeddings: {col_name}")
+            col = self.all_cities_listings[col_name]
+            col_array = np.asarray([np.asarray(entry) for entry in col])
 
-    cities_listings_with_region["comments_emb"] = comments_list_embedded
+            pca = sklearn.decomposition.PCA(n_components = keep_variance, svd_solver='full')
+            pca.fit(col_array)
+            dim_red_col_array = pca.transform(col_array)
+            print(f"used {pca.n_components_ } components for dim reduction to explain {keep_variance*100}% of the data")
+            
+            dim_red_col_name = col_name + '_dim_red'
+            self.all_cities_listings[dim_red_col_name] = list(dim_red_col_array)
+                
 
-    return cities_listings_with_region
-
-    
 
 
 
 def main():
-    pass
+    data_set = InsideAirbnbDataset()
+    data_set.add_nlp_embedding(nlp_col_names = ['name'])
+    data_set.dimensionality_reduction(col_names = ['name_emb'])
 
 
 if __name__ == "__main__":
     if not DEBUG_MODE:
-        data_dict = collecting_data_from_source(CITY_LIST)
-        
-
-        cities_listings_with_region = integrate_reviews_and_aggregate_regions(data_dict)
-        cities_listings_with_region = add_comments_embedding(cities_listings_with_region)
-
-        saving_path_cities_listings = SAVING_DIR + '/cities_listings_with_region.csv'
-        cities_listings_with_region.to_csv(path_or_buf= saving_path_cities_listings)
-        print(f"saved dataframe with listings from all cities in {SAVING_DIR}")
+        data_set = InsideAirbnbDataset()
+        data_set.add_nlp_embedding()
 
     else:
         main()
