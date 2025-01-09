@@ -83,6 +83,10 @@ class InsideAirbnbDataset:
                             
                         df = pd.read_csv(file_path, index_col=index_col)
 
+                        # filter out all listings which do not have price available
+                        if file_name_core == "listings":
+                            df = df[df["price"].notna()]
+
                     raw_data_dict[city][file_name] = df
 
         print(f"collecting data process done")
@@ -252,16 +256,22 @@ class InsideAirbnbDataset:
                     break
                 response = requests.get(image_url)
                 
-                # code for successful request is 200
-                if response.status_code == 200:
-                    image = Image.open(BytesIO(response.content)).resize(image_size)
-                    if image.mode != "RGB":
-                        image = image.convert('RGB')
-                    image_list.append(image)
-                else:
+                # NaN values are floats
+                if type(image_url) is float:
                     no_access_indices.append(i)
                     image_list.append(Image.new("RGB", image_size))
-                    #response.raise_for_status()
+                else:
+                    response = requests.get(image_url)
+                    # code for successful request is 200
+                    if response.status_code == 200:
+                        image = Image.open(BytesIO(response.content)).resize(image_size)
+                        if image.mode != "RGB":
+                            image = image.convert('RGB')
+                        image_list.append(image)
+                    else:
+                        no_access_indices.append(i)
+                        image_list.append(Image.new("RGB", image_size))
+                        #response.raise_for_status()
     
             print(f"pictures from rows {no_access_indices} could not be accessed")
             print("transform images and construct dataloader")
