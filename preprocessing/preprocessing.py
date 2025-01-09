@@ -9,29 +9,33 @@ import json
 from tqdm import tqdm
 import sklearn
 from typing import Tuple, Dict 
+import requests
+from PIL import Image
+from io import BytesIO
+import torchvision.transforms as transforms
+import torchvision.models as models
+from torchvision.models import ResNet50_Weights
 
 PATH_TO_REPO = "C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy/DataLit-InsideAirbnb"
 RAW_DATA_DIR = PATH_TO_REPO + '/data/raw_data'
 SAVING_DIR = PATH_TO_REPO + '/data/preprocessed_data'
 PROCESS_ALL_CITIES = True
 CITY_LIST   = ["berlin"] #list cities which should be processed if not PROCESS_ALL_CITIES
-DEBUG_MODE = True # determines if preprocessing is in DEBUG_MODE (no processing of file --> execution of main-function)
+DEBUG_MODE = False # determines if preprocessing is in DEBUG_MODE (no processing of file --> execution of main-function)
 
 
 
 class InsideAirbnbDataset:
     def __init__(
             self,
-            path_to_repo: str = "C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy/DataLit-InsideAirbnb",
+            raw_data_dir: str = "C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy/DataLit-InsideAirbnb/data/raw_data",
             process_all_cities: bool = True,
             cities_to_process: list   = ["berlin"]):
         
-        self.path_to_repo = path_to_repo
         self.process_all_cities = process_all_cities
         self.cities_to_process = cities_to_process
 
-        self.raw_data_dir = path_to_repo + '/raw_data'
-        self.saving_dir = path_to_repo + '/data/preprocessed_data'
+        self.raw_data_dir = raw_data_dir
 
         # read in raw data from raw data directory in repository
         self.raw_data_dict = self._read_data_from_files()
@@ -288,7 +292,7 @@ class InsideAirbnbDataset:
             
             # only important if embedd_n_images not -1 --> not all images get embedded
             feature_embeddings_list_n = len(feature_embeddings_list)
-            all_listings_n = len(all_listings)
+            all_listings_n = len(self.all_cities_listings)
             diff = all_listings_n - feature_embeddings_list_n
             for _ in range (diff):
                 feature_embeddings_list.append([]) 
@@ -308,11 +312,20 @@ class InsideAirbnbDataset:
             self.all_cities_listings[image_col_embedded_name] = feature_embeddings_list
             
         print("image embedding done")
-
+    
+    def save_all_cities_listings_to_file(self, 
+                                         file_name, 
+                                         saving_dir =  'C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy/DataLit-InsideAirbnb/data/preprocessed_data'):
+        
+        self.saving_dir = saving_dir
+        file_path = saving_dir + '/' + file_name
+        self.all_cities_listings.to_csv(file_path)
+        print(f"all cities listings saved to path: {file_path}")
 
 
 def main():
     data_set = InsideAirbnbDataset()
+    data_set.save_all_cities_listings_to_file('ignore_all_listings.csv')
     data_set.add_nlp_embedding(nlp_col_names = ['name'])
     data_set.dimensionality_reduction(col_names = ['name_emb'])
 
@@ -320,7 +333,6 @@ def main():
 if __name__ == "__main__":
     if not DEBUG_MODE:
         data_set = InsideAirbnbDataset()
-        data_set.add_nlp_embedding()
 
     else:
         main()
