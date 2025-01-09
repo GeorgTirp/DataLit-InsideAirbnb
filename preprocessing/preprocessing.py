@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader
 import json
 from tqdm import tqdm
 import sklearn
+from sklearn.decomposition import PCA
 from typing import Tuple, Dict 
 import requests
 from PIL import Image
@@ -185,12 +186,16 @@ class InsideAirbnbDataset:
             # embeddings are inferred directly for the entries of all other nlp columns
             else:
                 dataloader = DataLoader(nlp_col_list, batch_size=batch_size)
+                elements = 0
                 for batch in tqdm(dataloader):
+                    elements += len(batch)
                     inputs = tokenizer(batch, padding=True, truncation=True, return_tensors="pt").to(device)
                     with torch.no_grad():
                         outputs = model(**inputs)
                     embeddings = outputs.last_hidden_state[:, 0, :]
-                    embeddings = embeddings.squeeze(0).cpu().numpy()
+                    embeddings = embeddings.cpu().numpy()
+                    if len(list(embeddings)) != len(batch):
+                        print(embeddings.shape)
                     nlp_col_list_embedded += list(embeddings)
             
             nlp_col_embedded_name = nlp_col_name + '_emb'
@@ -205,7 +210,9 @@ class InsideAirbnbDataset:
                                     'neighborhood_overview_emb', 
                                     'host_about_emb', 
                                     'amenities_emb',
-                                    'comments_emb'
+                                    'comments_emb',
+                                    'host_picture_emb',
+                                    'picture_emb'
                                  ],
                                 keep_variance = 0.95):
         
@@ -216,7 +223,7 @@ class InsideAirbnbDataset:
             col = self.all_cities_listings[col_name]
             col_array = np.asarray([np.asarray(entry) for entry in col])
 
-            pca = sklearn.decomposition.PCA(n_components = keep_variance, svd_solver='full')
+            pca = PCA(n_components = keep_variance, svd_solver='full')
             pca.fit(col_array)
             dim_red_col_array = pca.transform(col_array)
             print(f"used {pca.n_components_ } components for dim reduction to explain {keep_variance*100}% of the data")
@@ -314,12 +321,21 @@ class InsideAirbnbDataset:
         print("image embedding done")
     
     def save_all_cities_listings_to_file(self, 
-                                         file_name, 
-                                         saving_dir =  'C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy/DataLit-InsideAirbnb/data/preprocessed_data'):
+                                         file_name_core, 
+                                         saving_dir =  'C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy/DataLit-InsideAirbnb/data/preprocessed_data',
+                                         single_data_frames = False):
         
         self.saving_dir = saving_dir
-        file_path = saving_dir + '/' + file_name
-        self.all_cities_listings.to_csv(file_path)
+        file_path = saving_dir + '/' + file_name_core + '.csv'
+
+        if single_data_frames:
+            for region in self.all_cities_listings["region"].unique():
+                regional_listing = self.all_cities_listings[self.all_cities_listings["region"] == region]
+                file_path = saving_dir + '/' + file_name_core + f"_{region}" + '.csv'
+                regional_listing.to_csv(file_path)
+        else:
+            file_path = saving_dir + '/' + file_name_core + '.csv'
+            self.all_cities_listings.to_csv(file_path)
         print(f"all cities listings saved to path: {file_path}")
 
 
