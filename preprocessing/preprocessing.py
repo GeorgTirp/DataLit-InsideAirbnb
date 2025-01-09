@@ -30,7 +30,7 @@ class InsideAirbnbDataset:
         self.process_all_cities = process_all_cities
         self.cities_to_process = cities_to_process
 
-        self.raw_data_dir = path_to_repo + '/data/raw_data'
+        self.raw_data_dir = path_to_repo + '/raw_data'
         self.saving_dir = path_to_repo + '/data/preprocessed_data'
 
         # read in raw data from raw data directory in repository
@@ -126,7 +126,6 @@ class InsideAirbnbDataset:
         print("aggregation done")
         return all_cities_listings
 
-
     def add_nlp_embedding(self, 
                           nlp_col_names = ['name', 'description', 'neighborhood_overview', 'host_about', 'amenities','comments'], 
                           batch_size = 32):
@@ -194,7 +193,7 @@ class InsideAirbnbDataset:
             self.all_cities_listings[nlp_col_embedded_name] = nlp_col_list_embedded
         
         print("nlp embedding done")
-
+    
     def dimensionality_reduction(self, 
                                  col_names = [
                                     'name_emb', 
@@ -220,8 +219,95 @@ class InsideAirbnbDataset:
             
             dim_red_col_name = col_name + '_dim_red'
             self.all_cities_listings[dim_red_col_name] = list(dim_red_col_array)
-                
+        print("dimensionality reduction done")
 
+    def add_image_embedding(self, 
+                            image_url_col_names = ['host_picture_url','picture_url'], 
+                            batch_size = 32, 
+                            embedd_n_images = -1):
+        
+        print("initializing image embedding process")
+        
+        for image_url_col_name in image_url_col_names:
+            print(f"downloading images from web for column '{image_url_col_name}'")
+            
+            image_url_col = self.all_cities_listings[image_url_col_name]
+            image_list = []
+            no_access_indices = []
+            image_size = (256,256)
+            
+            for i, image_url in enumerate(tqdm(image_url_col)):
+                if embedd_n_images >= 0 and i == embedd_n_images:
+                    break
+                response = requests.get(image_url)
+                
+                # code for successful request is 200
+                if response.status_code == 200:
+                    image = Image.open(BytesIO(response.content)).resize(image_size)
+                    if image.mode != "RGB":
+                        image = image.convert('RGB')
+                    image_list.append(image)
+                else:
+                    no_access_indices.append(i)
+                    image_list.append(Image.new("RGB", image_size))
+                    #response.raise_for_status()
+    
+            print(f"pictures from rows {no_access_indices} could not be accessed")
+            print("transform images and construct dataloader")
+    
+            normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                     std=[0.229, 0.224, 0.225])
+            
+            image_transform = transforms.Compose([
+                                            transforms.Resize(256),
+                                            transforms.CenterCrop(224),
+                                            transforms.ToTensor(),
+                                            normalize
+                                            ])
+            tensor_image_list = [image_transform(image) for image in image_list]
+    
+            data_loader = DataLoader(tensor_image_list, batch_size=batch_size)
+            
+            resnet = models.resnet50(weights=ResNet50_Weights.DEFAULT)
+            modules = list(resnet.children())[:-1]  # remove the FC layer
+            resnet_feature_extractor = torch.nn.Sequential(*modules)
+            resnet_feature_extractor.eval()
+            
+            print("embedding image data using ResNet50")
+            feature_embeddings_list = []
+       
+            for batch in tqdm(data_loader):
+                with torch.no_grad():
+                    feature_embeddings = resnet_feature_extractor(batch)
+                feature_embeddings = feature_embeddings.view(feature_embeddings.size(0), -1).numpy()
+    
+                feature_embeddings_list += list(feature_embeddings)
+    
+            col_name_core = image_url_col_name.split('_')[:-1]
+            image_col_embedded_name = '_'.join(col_name_core + ['emb'])
+            
+            # only important if embedd_n_images not -1 --> not all images get embedded
+            feature_embeddings_list_n = len(feature_embeddings_list)
+            all_listings_n = len(all_listings)
+            diff = all_listings_n - feature_embeddings_list_n
+            for _ in range (diff):
+                feature_embeddings_list.append([]) 
+                
+    
+            valid_feature_embeddings_list = deepcopy(feature_embeddings_list)[:feature_embeddings_list_n]
+            for index in no_access_indices[::-1]:
+                del valid_feature_embeddings_list[index]
+    
+            valid_feature_embeddings_array = np.asarray(valid_feature_embeddings_list)
+            mean_embedding = np.mean(valid_feature_embeddings_array, axis=0)
+            print(f"mean_embedding: {mean_embedding}")
+            
+            for no_access_index in no_access_indices:
+                feature_embeddings_list[no_access_index] = mean_embedding
+    
+            self.all_cities_listings[image_col_embedded_name] = feature_embeddings_list
+            
+        print("image embedding done")
 
 
 
