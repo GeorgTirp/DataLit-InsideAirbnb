@@ -29,7 +29,7 @@ DEBUG_MODE = False # determines if preprocessing is in DEBUG_MODE (no processing
 class InsideAirbnbDataset:
     def __init__(
             self,
-            raw_data_dir: str = "C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy/DataLit-InsideAirbnb/data/raw_data",
+            raw_data_dir: str = "/kaggle/input/berlin-amsterdam/raw_data",
             process_all_cities: bool = True,
             cities_to_process: list   = ["berlin"]):
         
@@ -59,6 +59,8 @@ class InsideAirbnbDataset:
 
         if self.process_all_cities:
             self.cities_to_process = cities_in_raw_data_dir
+
+        self.cities = self.cities_to_process
         
         for city in self.cities_to_process:
             print(f"collecting data for city: {city}")
@@ -95,9 +97,8 @@ class InsideAirbnbDataset:
 
     def _integrate_reviews_into_listings(self):
         print(f"initializing reviews collection process and integration into city listings")
-        cities = self.raw_data_dict.keys()
-
-        for city in cities:
+        
+        for city in self.cities:
             print(f"current city: {city}")
             city_listings = self.raw_data_dict[city]["listings.csv"]
             city_reviews = self.raw_data_dict[city]["reviews.csv"]       
@@ -123,10 +124,9 @@ class InsideAirbnbDataset:
 
     def _aggregate_regional_listings_into_one_df(self):
         print("initializing aggregation of regional listings into one dataframe")
-        cities = self.raw_data_dict.keys()
         all_cities_listings = []
 
-        for city in cities:
+        for city in self.cities:
             city_listings = self.raw_data_dict[city]["listings.csv"]
             city_listings.insert(0, 'region', city)
             all_cities_listings.append(city_listings)
@@ -236,44 +236,124 @@ class InsideAirbnbDataset:
             self.all_cities_listings[dim_red_col_name] = list(dim_red_col_array)
         print("dimensionality reduction done")
 
+    def download_images_and_save(self, 
+                            image_url_col_names = ['host_picture_url','picture_url'], 
+                            saving_dir = 'kaggle/working/preprocessed_data/filtered_dataset_images',
+                            process_n_images = -1):
+        
+        print("initializing image embedding process")
+        for city in self.cities:
+            for image_url_col_name in image_url_col_names:
+                print(f"downloading images from web for column '{image_url_col_name}'")
+
+                city_listings = self.all_cities_listings[self.all_cities_listings["region"] == city]
+                image_url_col = city_listings[image_url_col_name]
+                image_list = []
+                no_access_indices = []
+                image_size = (256,256)
+                
+                for i, image_url in enumerate(tqdm(image_url_col)):
+                    if process_n_images >= 0 and i == process_n_images:
+                        break
+                    response = requests.get(image_url)
+                    
+                    # NaN values are floats
+                    if type(image_url) is float:
+                        no_access_indices.append(i)
+                        image_list.append(Image.new("RGB", image_size))
+                    else:
+                        response = requests.get(image_url)
+                        # code for successful request is 200
+                        if response.status_code == 200:
+                            try:
+                                image = Image.open(BytesIO(response.content)).resize(image_size)
+                                if image.mode != "RGB":
+                                    image = image.convert('RGB')
+                                image_list.append(image)
+                            except OSError as e:
+                                no_access_indices.append(i)
+                                image_list.append(Image.new("RGB", image_size))  
+                        else:
+                            no_access_indices.append(i)
+                            image_list.append(Image.new("RGB", image_size))
+                            #response.raise_for_status()
+        
+                print(f"pictures from rows {no_access_indices} could not be accessed")
+
+                image_saving_path = saving_dir + '/' + city + '/' + image_url_col_name
+                if not os.path.exists(image_saving_path):
+                    os.makedirs(image_saving_path)
+                for i, image in enumerate(image_list):
+                    image.save(image_saving_path + '/' + f"image_{i}.jpg")
+                
+            
+
     def add_image_embedding(self, 
                             image_url_col_names = ['host_picture_url','picture_url'], 
-                            batch_size = 32, 
+                            batch_size = 32,
+                            read_from_dir = False,
+                            read_dir = 'kaggle/working/preprocessed_data/filtered_dataset_images',
                             embedd_n_images = -1):
         
         print("initializing image embedding process")
         
         for image_url_col_name in image_url_col_names:
-            print(f"downloading images from web for column '{image_url_col_name}'")
             
-            image_url_col = self.all_cities_listings[image_url_col_name]
-            image_list = []
-            no_access_indices = []
-            image_size = (256,256)
-            
-            for i, image_url in enumerate(tqdm(image_url_col)):
-                if embedd_n_images >= 0 and i == embedd_n_images:
-                    break
-                response = requests.get(image_url)
+            if read_from_dir:
+                print(f"reading images from directory for column '{image_url_col_name}'")
                 
-                # NaN values are floats
-                if type(image_url) is float:
-                    no_access_indices.append(i)
-                    image_list.append(Image.new("RGB", image_size))
-                else:
-                    response = requests.get(image_url)
-                    # code for successful request is 200
-                    if response.status_code == 200:
-                        image = Image.open(BytesIO(response.content)).resize(image_size)
-                        if image.mode != "RGB":
-                            image = image.convert('RGB')
+                cities_subdirectories = [d for d in os.listdir(read_dir) if os.path.isdir(os.path.join(read_dir, d))]
+
+                if not set(set(self.cities)).issubset(cities_subdirectories):
+                    raise ValueError("not all cities in need to be processed are in given read directory")
+
+                for city in self.cities:
+                    column_city_subdirectory = read_dir + '/' + city + '/' + image_url_col_name
+                    assert os.path.exists(column_city_subdirectory), f"subdirectory {column_city_subdirectory} does not exist"
+                    image_files = os.listdir(column_city_subdirectory)
+                    assert len(image_files) == len(self.all_cities_listings)
+
+                    image_list = []
+                    for image_file in image_files:
+                        image = Image.open(os.path.join(column_city_subdirectory, image_file))
                         image_list.append(image)
-                    else:
+
+                    assert len(image_list) == len(self.all_cities_listings)
+                    
+            else:
+                print(f"downloading images from web for column '{image_url_col_name}'")
+                image_url_col = self.all_cities_listings[image_url_col_name]
+                image_list = []
+                no_access_indices = []
+                image_size = (256,256)
+                
+                for i, image_url in enumerate(tqdm(image_url_col)):
+                    if embedd_n_images >= 0 and i == embedd_n_images:
+                        break
+                    response = requests.get(image_url)
+                    
+                    # NaN values are floats
+                    if type(image_url) is float:
                         no_access_indices.append(i)
                         image_list.append(Image.new("RGB", image_size))
-                        #response.raise_for_status()
-    
-            print(f"pictures from rows {no_access_indices} could not be accessed")
+                    else:
+                        response = requests.get(image_url)
+                        # code for successful request is 200
+                        if response.status_code == 200:
+                            try:
+                                image = Image.open(BytesIO(response.content)).resize(image_size)
+                                if image.mode != "RGB":
+                                    image = image.convert('RGB')
+                                image_list.append(image)
+                            except OSError as e:
+                                no_access_indices.append(i)
+                                image_list.append(Image.new("RGB", image_size))  
+                        else:
+                            no_access_indices.append(i)
+                            image_list.append(Image.new("RGB", image_size))
+                            #response.raise_for_status()
+        
+                print(f"pictures from rows {no_access_indices} could not be accessed")
             print("transform images and construct dataloader")
     
             normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
@@ -332,7 +412,7 @@ class InsideAirbnbDataset:
     
     def save_all_cities_listings_to_file(self, 
                                          file_name_core, 
-                                         saving_dir =  'C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy/DataLit-InsideAirbnb/data/preprocessed_data',
+                                         saving_dir =  'kaggle/working/preprocessed_data',
                                          single_data_frames = False):
         
         self.saving_dir = saving_dir
@@ -347,7 +427,6 @@ class InsideAirbnbDataset:
             file_path = saving_dir + '/' + file_name_core + '.csv'
             self.all_cities_listings.to_csv(file_path)
         print(f"all cities listings saved to path: {file_path}")
-
 
 def main():
     data_set = InsideAirbnbDataset()
