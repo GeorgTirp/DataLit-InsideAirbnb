@@ -31,21 +31,28 @@ class InsideAirbnbDataset:
             self,
             raw_data_dir: str = "/kaggle/input/berlin-amsterdam/raw_data",
             process_all_cities: bool = True,
-            cities_to_process: list   = ["berlin"]):
+            cities_to_process: list   = ["berlin"],
+            read_from_raw = True,
+            preprocessed_data_dir = 'preprocessed_data',
+            file_name = 'single_city_listing.csv'):
         
         self.process_all_cities = process_all_cities
         self.cities_to_process = cities_to_process
-
-        self.raw_data_dir = raw_data_dir
-
-        # read in raw data from raw data directory in repository
-        self.raw_data_dict = self._read_data_from_files()
-
-        # integrate the reviews from reviews df into the listings df for each city in the raw_data_dict
-        self._integrate_reviews_into_listings()
-
-        # aggregate all listings dfs from each city and store in one all_cities_listings df
-        self.all_cities_listings = self._aggregate_regional_listings_into_one_df()
+        
+        if read_from_raw:
+            self.raw_data_dir = raw_data_dir
+    
+            # read in raw data from raw data directory in repository
+            self.raw_data_dict = self._read_data_from_files()
+    
+            # integrate the reviews from reviews df into the listings df for each city in the raw_data_dict
+            self._integrate_reviews_into_listings()
+    
+            # aggregate all listings dfs from each city and store in one all_cities_listings df
+            self.all_cities_listings = self._aggregate_city_listings_into_one_df()
+        else:
+            self.preprocessed_data_dir = preprocessed_data_dir
+            self.all_cities_listings = self._read_preprocessed_listings(file_name=file_name)
         
     
     def _read_data_from_files(self):
@@ -122,13 +129,13 @@ class InsideAirbnbDataset:
         
         print("integration of reviews into cites listings done")
 
-    def _aggregate_regional_listings_into_one_df(self):
+    def _aggregate_city_listings_into_one_df(self):
         print("initializing aggregation of regional listings into one dataframe")
         all_cities_listings = []
 
         for city in self.cities:
             city_listings = self.raw_data_dict[city]["listings.csv"]
-            city_listings.insert(0, 'region', city)
+            city_listings.insert(0, 'city', city)
             all_cities_listings.append(city_listings)
 
         all_cities_listings = pd.concat(all_cities_listings, ignore_index=True)
@@ -246,7 +253,7 @@ class InsideAirbnbDataset:
             for image_url_col_name in image_url_col_names:
                 print(f"downloading images from web for column '{image_url_col_name}'")
 
-                city_listings = self.all_cities_listings[self.all_cities_listings["region"] == city]
+                city_listings = self.all_cities_listings[self.all_cities_listings["city"] == city]
                 image_url_col = city_listings[image_url_col_name]
                 image_list = []
                 no_access_indices = []
@@ -411,22 +418,58 @@ class InsideAirbnbDataset:
         print("image embedding done")
     
     def save_all_cities_listings_to_file(self, 
-                                         file_name_core, 
-                                         saving_dir =  'kaggle/working/preprocessed_data',
-                                         single_data_frames = False):
+                                         file_name = "single_city_listing.csv", 
+                                         saving_dir =  'preprocessed_data',
+                                         single_data_frames = True):
         
         self.saving_dir = saving_dir
-        file_path = saving_dir + '/' + file_name_core + '.csv'
 
         if single_data_frames:
-            for region in self.all_cities_listings["region"].unique():
-                regional_listing = self.all_cities_listings[self.all_cities_listings["region"] == region]
-                file_path = saving_dir + '/' + file_name_core + f"_{region}" + '.csv'
-                regional_listing.to_csv(file_path)
+            cities = self.all_cities_listings["city"].unique()
+            for city in cities:
+                city_listings = self.all_cities_listings[self.all_cities_listings["city"] == city]
+                city_dir = saving_dir + '/' + f"/{city}"
+                
+                if not os.path.exists(city_dir):
+                    os.makedirs(city_dir)
+                file_path = city_dir + '/' + file_name 
+                
+                city_listings.to_csv(file_path)
+                print(f"{city} listings saved to path: {file_path}")
         else:
-            file_path = saving_dir + '/' + file_name_core + '.csv'
+            file_path = saving_dir + '/' + file_name 
             self.all_cities_listings.to_csv(file_path)
-        print(f"all cities listings saved to path: {file_path}")
+            print(f"all cities listings saved to path: {file_path}")
+
+    def _read_preprocessed_listings(self, file_name):
+        
+        cities_subdirectories = [d for d in os.listdir(self.preprocessed_data_dir) if os.path.isdir(os.path.join(self.preprocessed_data_dir, d))]
+
+        
+        if not set(set(self.cities_to_process)).issubset(cities_subdirectories):
+            raise ValueError("not all cities in need to be processed are in given read directory")
+
+        if self.process_all_cities:
+            self.cities_to_process = cities_subdirectories
+        self.cities = self.cities_to_process
+        all_cities_listings = []
+
+        for city in self.cities:
+            print(f"collecting data for city: {city}")
+            city_dir = self.preprocessed_data_dir + '/' + f"{city}"
+            city_dir_content = os.listdir(city_dir)
+            
+            assert len(city_dir_content) == 1, f"there must exist only one single listing for city {city} in directory {city_dir}"
+            city_file = city_dir_content[0]
+            file_path = city_dir + '/' + file_name 
+            
+            city_listings = pd.read_csv(file_path, index_col=0)
+            all_cities_listings.append(city_listings)
+            
+        all_cities_listings = pd.concat(all_cities_listings, ignore_index=True)
+        print("reading preprocessed cities from directoy done")
+        return all_cities_listings
+        
 
 def main():
     data_set = InsideAirbnbDataset()
