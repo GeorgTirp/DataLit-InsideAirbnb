@@ -71,6 +71,6 @@ def second_merge(data_dict):
 
 
 if __name__ == "__main__":
-    folder_path = '/Users/georgtirpitz/Documents/Data_Literacy/example_data'
+    folder_path = 'data/example_data'
     data_dict = read(folder_path)
     merged_data_dict = first_merge(data_dict)
