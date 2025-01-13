@@ -142,6 +142,110 @@ class InsideAirbnbDataset:
         print("aggregation done")
         return all_cities_listings
 
+    def filter_listings_and_impute_nan(self,
+                                       meta_data_columns = [
+                                           'listing_url', 
+                                           'host_location', 
+                                           'scrape_id', 
+                                           'last_scraped', 
+                                           'source',  
+                                           'host_id', 
+                                           'host_url', 
+                                           'host_name', 
+                                           'host_neighbourhood',
+                                           'host_thumbnail_url', 
+                                           'host_verifications', 
+                                           'neighbourhood', 
+                                           'neighbourhood_group_cleansed', 
+                                           'calendar_last_scraped', 
+                                           'license'
+                                       ],
+                                       nan_columns = ['calendar_updated'],
+                                       include_only_reviewed = True):
+        
+        all_cities_listings = self.all_cities_listings
+        #filter the NaN columns (here are no entries)
+        all_cities_listings = all_cities_listings.drop(columns = nan_columns)
+        
+        #filter the meta_data columns (these columns are not used for prediction)
+        all_cities_listings = all_cities_listings.drop(columns = meta_data_columns)
+    
+
+        #categorical NaN:
+        #  'host_response_time' --> extra NaN category
+        all_cities_listings['host_response_time'].fillna(value='not available', inplace=True)
+    
+        #  'host_is_superhost'  --> False
+        all_cities_listings['host_is_superhost'].fillna(value='f', inplace=True)
+        
+        #  'has_availability'   --> False
+        all_cities_listings['has_availability'].fillna(value='f', inplace=True)
+
+        
+        #numerical NaN:
+        #  'host_response_rate'    --> mean/median
+        all_cities_listings['host_response_rate'] = all_cities_listings['host_response_rate'].map(
+            lambda s: s.removesuffix('%') if type(s) == str else s, 
+            na_action = 'ignore'
+        )
+        median_value = all_cities_listings['host_response_rate'].median()
+        all_cities_listings['host_response_rate'].fillna(value=median_value, inplace=True)
+
+        #  'host_acceptance_rate'  --> mean/median
+        all_cities_listings['host_acceptance_rate'] = all_cities_listings['host_acceptance_rate'].map(
+            lambda s: s.removesuffix('%') if type(s) == str else s, 
+            na_action = 'ignore'
+        )
+        median_value = all_cities_listings['host_acceptance_rate'].median()
+        all_cities_listings['host_acceptance_rate'].fillna(value=median_value, inplace=True)
+
+        #  'bathrooms'        --> mean/median
+        median_value = all_cities_listings['bathrooms'].median()
+        all_cities_listings['bathrooms'].fillna(value=median_value, inplace=True)
+
+        #  'bedrooms'         --> mean/median
+        median_value = all_cities_listings['bedrooms'].median()
+        all_cities_listings['bedrooms'].fillna(value=median_value, inplace=True)
+
+        #  'beds'         --> mean/median
+        median_value = all_cities_listings['beds'].median()
+        all_cities_listings['beds'].fillna(value=median_value, inplace=True)
+
+        #  'first_review'     --> leave out listings without reviews (only include listings which include reviews which indicates that listings are booked and price is valid)
+        #   .....
+        #  'reviews_per_mon'  --> leave out listings without reviews (only include listings which include reviews which indicates that listings are booked and price is valid)
+        review_columns = [
+                'first_review', 
+                'review_scores_rating', 
+                'review_scores_accuracy', 
+                'review_scores_cleanliness', 
+                'review_scores_checkin',
+                'review_scores_communication', 
+                'review_scores_location', 
+                'review_scores_value', 
+                'reviews_per_month'
+            ]
+        if include_only_reviewed:
+            all_cities_listings = all_cities_listings[all_cities_listings['first_review'].notna()]
+            for review_col in review_columns:
+                assert not all_cities_listings[review_col].isna().any()
+        else:
+            # since I could not think of an sensible imputation strategy
+            all_cities_listings.drop(columns = review_columns)
+        
+        #NLP NaN:
+        #  'name'                   --> embedding of empty string ""
+        #  'description'            --> embedding of empty string ""
+        #  'neighborhood_overview'  --> embedding of empty string ""
+        #  'host_about'             --> embedding of empty string ""
+        # --> these are handled in the add_nlp_embedding function
+    
+        #  'comments'             --> embedding of empty string ""
+        # --> handled in the _integrate_reviews_into_listings function
+
+        self.all_cities_listings = all_cities_listings
+        
+    
     def add_nlp_embedding(self, 
                           nlp_col_names = ['name', 'description', 'neighborhood_overview', 'host_about', 'amenities','comments'], 
                           batch_size = 32):
