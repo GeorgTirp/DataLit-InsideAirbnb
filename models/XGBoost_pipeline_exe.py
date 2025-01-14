@@ -1,7 +1,5 @@
 import pandas as pd
 import sys
-sys.path.append('preprocessing/')
-from preprocessing import read
 from typing import Tuple, Dict
 from XGBoost_pipeline import run_XGBoost_pipeline
 
@@ -11,10 +9,10 @@ from XGBoost_pipeline import run_XGBoost_pipeline
 data = 'data/example_data'
 
 # Name of the variable to predict in the data table
-target = 'home_price'
+target = 'price'
 
 # Name of the variables to use for the prediction
-features = ['longitude', 'latitue']  # Emtpy list means all the variables except the target
+features = ['longitude', 'latitude']  # Emtpy list means all the variables except the target
 
 # Outlier removal?
 outlier_removal = False

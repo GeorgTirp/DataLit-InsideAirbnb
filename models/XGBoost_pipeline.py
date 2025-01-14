@@ -8,12 +8,17 @@ from sklearn.metrics import r2_score
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import GridSearchCV, LeaveOneOut, train_test_split, KFold, cross_val_score
 import sys
-sys.path.append('preprocessing/')
-from preprocessing import read
 from typing import Tuple, Dict
 from xgboost import XGBRegressor
 from scipy.stats import pearsonr
 import numpy as np
+import matplotlib.pyplot as plt
+import re
+from plot_on_map import PlotOnMap
+
+
+
+
 
 
 # A function to remove outliers
@@ -24,6 +29,31 @@ def remove_outliers(X, y):
 # A function to remove correlated features
 def remove_correlated_features(X, threshold):
     return X
+
+
+def plot_results(results_df, identifier):
+    """
+    Plots the results of the predictions.
+
+    Parameters
+    ----------
+    results_df : pd.DataFrame
+        DataFrame containing the results of the predictions.
+    identifier : str
+        Identifier for the plot.
+    """
+
+    plt.figure(figsize=(10, 6))
+    plt.scatter(results_df['y_test'], results_df['y_pred'], alpha=0.5)
+    plt.plot([results_df['y_test'].min(), results_df['y_test'].max()], 
+             [results_df['y_test'].min(), results_df['y_test'].max()], 
+             color='red', linestyle='--', linewidth=2)
+    plt.xlabel('Actual prices')
+    plt.ylabel('Predicted prices')
+    plt.title(f'Actual vs Predicted prices ({identifier})')
+    plt.grid(True)
+    plt.savefig(f'evaluation/{identifier}_actual_vs_predicted.png')
+    plt.show()
 
 
 
@@ -54,13 +84,21 @@ def run_XGBoost_pipeline(data='', target='listing_price', features=[],
     -------
     - The result of the predictions
     - The feature importances
-    - The SHAP values
+    - The SHAP prices
     - The Regresser performance
     """
 
     ### -- Load and preprocess the data -- ###
-    data = read(data)
+    data = pd.read_csv('../data/listings_amsterdam.csv')
+    # Use regex to remove non-numeric characters except the decimal point
+    print(data['price'])
+    # Remove locations with NaN prices
+    data = data.dropna(subset=['price'])
 
+    # Clean the prices if they look like $125.00
+    data['price'] = data['price'].replace('[\$,]', '', regex=True).astype(float)
+
+    PlotOnMap(data, 'price').plot_listings()
 
 
     # Extract the target variable
@@ -69,12 +107,15 @@ def run_XGBoost_pipeline(data='', target='listing_price', features=[],
     # Extract the features
     if len(features) == 0:
         X = data.drop(columns=[target])
+        print(f'Using all the features except {target}')
     else:
+        print(f'Using the following features: {features}')
         X = data[features]
 
     # Remove outliers
     if outlier_removal:
         X, y = remove_outliers(X, y)
+        print('Outliers removed')
 
     # Remove correlated features
     X = remove_correlated_features(X, correlation_threshold)
@@ -83,12 +124,15 @@ def run_XGBoost_pipeline(data='', target='listing_price', features=[],
     # Safe the preprocessed data
     if save_results == True:
         X.to_csv(f'data/{identifier}_X.csv', index=False)
+        print(f'Preprocessed data saved as data/{identifier}_X.csv')
 
     ### ---------------------------------- ###
 
 
     ### -- Train the model -- ###
-    
+
+
+    print('Training the model...')
     hyperparameter_cv = KFold(n_splits=cv, shuffle=True, random_state=42)
     model_evaluation_cv = KFold(n_splits=cv, shuffle=True, random_state=42)
 
@@ -103,13 +147,15 @@ def run_XGBoost_pipeline(data='', target='listing_price', features=[],
 
     xgb = XGBRegressor(random_state=random_state)
 
-    grid_search = GridSearchCV(estimator=xgb, param_grid=param_grid_xgb, scoring='mean_squared_error', cv=hyperparameter_cv, n_jobs=-1)
+    grid_search = GridSearchCV(estimator=xgb, param_grid=param_grid_xgb, scoring='neg_root_mean_squared_error', cv=hyperparameter_cv, n_jobs=-1)
 
     all_y_test = []
     all_y_pred = []
     all_mse = []
-    all_shap_values = []
+    all_shap_prices = []
+    fold = 1
     for train_idx, test_idx in model_evaluation_cv.split(X):
+        print(f'Training fold [{fold}/{cv}]:')
         X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
         y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
 
@@ -123,19 +169,29 @@ def run_XGBoost_pipeline(data='', target='listing_price', features=[],
         
         mse = mean_squared_error(y_test, y_pred)
         all_mse.append(mse)
+
+        print(f'Mean Squared Error: {mse} for fold [{fold}/{cv}]')
+        print(f'Best hyperparameters: {grid_search.best_params_}')
+        print(f'Estimating SHAP price...')
         
-        # Compute SHAP values for the entire dataset using the best model
+        # Compute SHAP prices for the entire dataset using the best model
         explainer = shap.TreeExplainer(best_model)
-        shap_values = explainer.shap_values(X)
-        all_shap_values.append(shap_values)
+        shap_prices = explainer.shap_prices(X)
+        all_shap_prices.append(shap_prices)
+        print(f'SHAP prices estimated for fold [{fold}/{cv}]')
+        print('----------------------------------')
+        fold += 1
+
+    print('All folds trained')
+    print('Evaluating Model...')
 
     ### --------------------- ###
 
     ### -- Evaluate the model -- ###
 
-    # Calculate Pearson correlation and p-value
-    r_score, p_value = pearsonr(all_y_test, all_y_pred)
-    print(f'Pearson correlation: {r_score}, p-value: {p_value}')
+    # Calculate Pearson correlation and p-price
+    r_score, p_price = pearsonr(all_y_test, all_y_pred)
+    print(f'Pearson correlation: {r_score}, p-price: {p_price}')
 
     average_mse = np.mean(all_mse)
     print(f'Nested CV Mean Squared Error: {average_mse}')
@@ -143,10 +199,15 @@ def run_XGBoost_pipeline(data='', target='listing_price', features=[],
     # Create a dataframe with the results for plotting
     results_df = pd.DataFrame({'y_test': all_y_test, 'y_pred': all_y_pred})
 
-    # Aggregate SHAP values across folds
-    all_shap_values = np.array(all_shap_values)
-    mean_shap_values = np.mean(all_shap_values, axis=0)
-    mean_abs_shap_values = np.mean(np.abs(mean_shap_values), axis=0)
+    if save_results == True:
+        results_df.to_csv(f'results/{identifier}_results.csv', index=False)
+        print(f'Results saved as results/{identifier}_results.csv')
+        plot_results(results_df, identifier)
+
+    # Aggregate SHAP prices across folds
+    all_shap_prices = np.array(all_shap_prices)
+    mean_shap_prices = np.mean(all_shap_prices, axis=0)
+    mean_abs_shap_prices = np.mean(np.abs(mean_shap_prices), axis=0)
 
 
 
