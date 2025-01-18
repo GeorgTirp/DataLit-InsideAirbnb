@@ -5,7 +5,7 @@ from pandarallel import pandarallel
 import folium
 
 
-
+##### This is a script to add additional custom features to the AirBnB data #####
 
 
 class AddCustomFeatures:
