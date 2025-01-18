@@ -5,11 +5,17 @@ import os
 
 
 
-### Read all CSV files in a folder into a dictionary of DataFrames for every city/region in the folder###
+import gzip
 
+def is_gzipped(file_path):
+    try:
+        with open(file_path, 'rb') as f:
+            return f.read(2) == b'\x1f\x8b'  # Check for gzip magic number
+    except Exception as e:
+        print(f"Error reading file {file_path}: {e}")
+        return False
 
 def read(folder_path):
-
     # Initialize the dictionary to store DataFrames
     data_dict = {}
 
@@ -30,17 +36,31 @@ def read(folder_path):
             if file_name.endswith('.csv') or file_name.endswith('.geojson') or file_name.endswith('.csv.gz'):
                 file_path = os.path.join(root, file_name)
 
-                # Read the file into a DataFrame
-                if file_name.endswith('.geojson'):
-                    df = pd.read_json(file_path)  # Adjust based on the specific geojson handling
-                else:
-                    df = pd.read_csv(file_path)
+                try:
+                    # If it's a gzipped CSV file, check if it is valid
+                    if file_name.endswith('.csv.gz'):
+                        if is_gzipped(file_path):
+                            print(f"Loading gzipped file: {file_path}")
+                            df = pd.read_csv(file_path, compression='gzip')
+                        else:
+                            print(f"Skipping invalid gzip file: {file_path}")
+                            continue
+                    elif file_name.endswith('.geojson'):
+                        print(f"Loading geojson file: {file_path}")
+                        df = pd.read_json(file_path)  # Adjust based on the specific geojson handling
+                    else:
+                        print(f"Loading regular CSV file: {file_path}")
+                        df = pd.read_csv(file_path)
 
-                # Append the DataFrame to the list for this subdirectory
-                data_dict[subdirectory_name].append(df)
+                    # Append the DataFrame to the list for this subdirectory
+                    data_dict[subdirectory_name].append(df)
 
-                print(f"Loaded {file_path} into {subdirectory_name}'s list of DataFrames")
+                    print(f"Loaded {file_path} into {subdirectory_name}'s list of DataFrames")
+                except Exception as e:
+                    print(f"Error processing file {file_path}: {e}")
+
     return data_dict
+
 
 
 
@@ -69,6 +89,13 @@ def second_merge(data_dict):
     combined_df = pd.concat(df_list_with_region, ignore_index=True)
     return combined_df
 
+def preprocess_data(data_dict):
+    merged_data_dict = first_merge(data_dict)
+    combined_df = second_merge(merged_data_dict)
+    output_path = 'data/preprocessed_data.csv'
+    combined_df.to_csv(output_path, index=False)
+    print(f"Data saved to {output_path}")
+    return combined_df
 
 if __name__ == "__main__":
     folder_path = 'data/example_data'

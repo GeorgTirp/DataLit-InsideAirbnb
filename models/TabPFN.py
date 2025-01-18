@@ -48,7 +48,7 @@ class TabPFNRegression():
         self.reg_model = reg
         return self.reg_model
        
-    def predict(self, X: pd.DataFrame) -> Tuple:
+    def predict(self, X: pd.DataFrame) -> Dict:
         """ Predict using the trained models (for class extern usage)"""
         if self.reg_model is None:
             raise ValueError("Model not fitted yet")
@@ -83,9 +83,10 @@ class TabPFNRegression():
             'r2': reg_r2,
         }
         self.metrics = tabpfn_metrics
+
         return tabpfn_metrics
     
-    def feature_importance(self, top_n: int = 10) -> Tuple[Dict, Dict]:
+    def feature_importance(self, top_n: int = 10) -> Dict:
         """ Return the feature importance for the Random Forest and linear model"""
         X_train, X_test, y_train, y_test = self.train_split
         def loco_importances(self, X_train, y_test):
@@ -102,7 +103,7 @@ class TabPFNRegression():
             
             return importances
         loco_attributions = loco_importances(self, X_train, y_test)
-        
+
         return loco_attributions
 
     def plot():
@@ -117,5 +118,4 @@ if __name__ == "__main__":
     preds = model.predict(data_df)
     metrics = model.evaluate()
     importances = model.feature_importance()
-
     print(preds.shape)
