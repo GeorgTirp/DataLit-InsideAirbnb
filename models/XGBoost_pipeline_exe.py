@@ -11,11 +11,11 @@ data = '/home/frieder/pCloudDrive/AirBnB_Daten/Preprocessed_data/germany_preproc
 # Name of the variable to predict in the data table
 target = 'price'
 
-# Add custom features, not provided by AirBnb? currently supported: ['centrality', 'review_sentiment']
-add_custom_features = ['distance_to_city_center']
+# Add custom features, not provided by AirBnb? currently supported: ['distance_to_city_center', 'average_review_length']
+add_custom_features = ['distance_to_city_center', 'average_review_length']
 
 # Name of the variables to use for the prediction
-features = ['accommodates', 'bathrooms', 'bedrooms', 'beds', 'number_of_reviews', 'review_scores_value']  # Emtpy list means all the variables except the target
+features = ['accommodates', 'bathrooms', 'bedrooms', 'beds', 'review_scores_value']  # Emtpy list means all the variables except the target
 
 # Outlier removal?
 outlier_removal = False

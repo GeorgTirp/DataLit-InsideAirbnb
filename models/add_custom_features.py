@@ -20,6 +20,9 @@ class AddCustomFeatures:
         if 'review_sentiment' in additional_features:
             self.add_review_sentiment()
 
+        if 'average_review_length' in additional_features:
+            self.add_review_length()
+
 
     # Calculates the distance from the middle of all the listing (e.g. city center) for each listing as measure of inverse centrality
     def calculate_centrality(self):
@@ -51,6 +54,16 @@ class AddCustomFeatures:
         analyzer = SentimentIntensityAnalyzer()
         return analyzer.polarity_scores(text)['compound']
     
+    
+    def add_review_length(self):
+        def calculate_review_length(reviews):
+            lengths = []
+            for review in eval(reviews):
+                lengths.append(len(review.split()))
+            return np.mean(lengths)
+        pandarallel.initialize(progress_bar=True)
+        self.data['average_review_length'] = self.data['comments'].parallel_apply(calculate_review_length)
+
     # Returns the data
     def return_data(self):
         return self.data
