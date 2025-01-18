@@ -1,0 +1,4 @@
+# ignore all files beginning with "ignore"
+ignore*
+# ignore .vscode  configuration file
+.vscode\
