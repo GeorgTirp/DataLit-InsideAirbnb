@@ -14,7 +14,7 @@ from scipy.stats import pearsonr
 import numpy as np
 import matplotlib.pyplot as plt
 import re
-#from evaluation.plot_on_map import PlotOnMap
+from add_custom_features import AddCustomFeatures
 
 
 # A function to remove outliers
@@ -57,7 +57,7 @@ def plot_results(results_df, r_score, p_value, save_results=False, save_path='re
 
 
 def run_XGBoost_pipeline(data='', target='listing_price', features=[], 
-                     outlier_removal=False, cv=5, correlation_threshold=1, save_results=False, save_path='results/', identifier='', random_state=42):
+                     outlier_removal=False, cv=5, correlation_threshold=1, save_results=False, save_path='results/', add_custom_features=[], identifier='', random_state=42):
     """
     Runs a pipeline to predicts the target variable using an XGBoost regressor. The features are subsequently evaluated using SHAP analysis.
 
@@ -92,20 +92,13 @@ def run_XGBoost_pipeline(data='', target='listing_price', features=[],
     data['price'] = data['price'].replace('[\$,]', '', regex=True).astype(float)
     data = data[data['price'] < 1000]
 
+    # Add custom features
+    Feature_Adder = AddCustomFeatures(data, add_custom_features)
+    data = Feature_Adder.return_data()
+
+
     # Extract the target variable
     y = data[target]
-
-
-    # Add centrality feature:
-    # Calculate the centrality feature based on latitude and longitude
-    def calculate_centrality(lat, lon):
-        # Assuming the central point is the mean of all latitudes and longitudes
-        central_lat = data['latitude'].mean()
-        central_lon = data['longitude'].mean()
-        return np.sqrt((lat - central_lat)**2 + (lon - central_lon)**2)
-
-    data['centrality'] = data.apply(lambda row: calculate_centrality(row['latitude'], row['longitude']), axis=1)
-    features.append('centrality')
 
 
     # Extract the features
@@ -114,7 +107,9 @@ def run_XGBoost_pipeline(data='', target='listing_price', features=[],
         print(f'Using all the features except {target}')
     else:
         print(f'Using the following features: {features}')
-        X = data[features]
+        print(data.columns)
+        print(features + add_custom_features)
+        X = data[features + add_custom_features]
 
     # Remove outliers
     if outlier_removal:
@@ -147,9 +142,9 @@ def run_XGBoost_pipeline(data='', target='listing_price', features=[],
 
 
     # Safe the preprocessed data
-    #if save_results == True:
-    #    X.to_csv(f'data/{identifier}_X.csv', index=False)
-    #    print(f'Preprocessed data saved as data/{identifier}_X.csv')
+    if save_results == True:
+        X.to_csv(f'data/{identifier}_X.csv', index=False)
+        print(f'Preprocessed data saved as data/{identifier}_X.csv')
 
     ### ---------------------------------- ###
 
