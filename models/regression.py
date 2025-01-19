@@ -5,8 +5,8 @@ from sklearn.metrics import mean_squared_error
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import r2_score
 from sklearn.model_selection import cross_val_score
-
-from preprocessing.preprocessing_test import preprocess_data
+from add_custom_features import AddCustomFeatures
+#from preprocessing.preprocessing_test import preprocess_data
 from typing import Tuple, Dict
 
 
@@ -43,11 +43,25 @@ class RegressionModels:
         self.rf_hparams = rf_hparams
         self.linear_model = None
         self.rf_model = None
-        X = data_df[Feature_Selection['features']]
-        y = data_df[Feature_Selection['target']]
+        X,y = self.model_specific_preprocess(data_df)
         self.train_split = train_test_split(X, y, test_size=test_split_size, random_state=42)
 
-
+    def model_specific_preprocess(self, data_df: pd.DataFrame) -> Tuple:
+        """ Preprocess the data for the TabPFN model"""
+        # Ensure all features are numeric
+        data_df = data_df.dropna(subset=Feature_Selection['features'] + [Feature_Selection['target']])
+        X = data_df[Feature_Selection['features']]
+        y = data_df[Feature_Selection['target']]
+        X = X.apply(pd.to_numeric, errors='coerce')
+        # Z-score normalization
+        X = (X - X.mean()) / X.std()
+        # Remove dollar sign and convert to float
+        if y.dtype == object:
+            y = y.replace('[\$,]', '', regex=True).astype(float)
+        
+    
+        return X, y
+    
     def fit(self) -> None:
         """ Train and predict using Linear Regression and Random Forest"""
     
@@ -128,9 +142,13 @@ class RegressionModels:
         pass
 
 if __name__ == "__main__":
-    folder_path = '/Users/georgtirpitz/Documents/Data_Literacy/example_data'
-    data_df = preprocess_data(folder_path)
+    
+    folder_path = "/home/georg/Documents/Master/Data_Literacy"
+    data_df = pd.read_csv(folder_path + "/city_listings.csv")
+    add_custom_features = ['distance_to_city_center', 'average_review_length']
+    Feature_Adder = AddCustomFeatures(data_df, add_custom_features)
     model = RegressionModels(data_df)
     model.fit()
-    model.evaluate()
-    model.feature_importance(10)
+    evals =model.evaluate()
+    feature_importances = model.feature_importance(10)
+     
