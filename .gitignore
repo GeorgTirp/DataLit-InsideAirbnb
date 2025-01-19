@@ -2,3 +2,5 @@
 ignore*
 # ignore .vscode  configuration file
 .vscode\
+
+build
