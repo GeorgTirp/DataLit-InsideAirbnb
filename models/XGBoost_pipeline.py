@@ -15,11 +15,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 import re
 from add_custom_features import AddCustomFeatures
+import logging
+import os
 
 
 # A function to remove outliers
 def remove_outliers(X, y):
     return X, y
+
+# Function to log and log_and_print messages
+def log_and_print(message):
+    print(message)
+    logging.info(message)
 
 
 # A function to remove correlated features
@@ -85,6 +92,32 @@ def run_XGBoost_pipeline(data='', target='listing_price', features=[],
     - The SHAP prices
     - The Regresser performance
     """
+    # Create results directory if it doesn't exist
+    
+    save_path = f'{save_path}/{identifier}' 
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+
+    # Set up logging
+    logging.basicConfig(filename=f'{save_path}/{identifier}_pipeline.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+
+
+    log_and_print('Starting the XGBoost pipeline...')
+    log_and_print('----------------------------------')
+    log_and_print('Parameters:')
+    log_and_print(f'Data: {data}')
+    log_and_print(f'Target: {target}')
+    log_and_print(f'Features: {features}')
+    log_and_print(f'Outlier removal: {outlier_removal}')
+    log_and_print(f'CV: {cv}')
+    log_and_print(f'Correlation threshold: {correlation_threshold}')
+    log_and_print(f'Save results: {save_results}')
+    log_and_print(f'Additional custom features: {add_custom_features}')
+    log_and_print(f'Save path: {save_path}')
+    log_and_print(f'Identifier: {identifier}')
+    log_and_print(f'Random state: {random_state}')
+    log_and_print('----------------------------------')
 
     ### -- Load and preprocess the data -- ###
     data = pd.read_csv(data)
@@ -104,30 +137,30 @@ def run_XGBoost_pipeline(data='', target='listing_price', features=[],
     # Extract the features
     if len(features) == 0:
         X = data.drop(columns=[target])
-        print(f'Using all the features except {target}')
+        log_and_print(f'Using all the features except {target}')
     else:
-        print(f'Using the following features: {features}')
-        print(data.columns)
-        print(features + add_custom_features)
+        log_and_print(f'Using the following features: {features}')
+        log_and_print(data.columns)
+        log_and_print(features + add_custom_features)
         X = data[features + add_custom_features]
 
     # Remove outliers
     if outlier_removal:
         X, y = remove_outliers(X, y)
-        print('Outliers removed')
+        log_and_print('Outliers removed')
 
     # Remove correlated features
     X = remove_correlated_features(X, correlation_threshold)
 
-    print('Features:')
-    print(X.head())
-    print('----------------------------------')
-    print('Target:')
-    print(y.head())
-    print('----------------------------------')
+    log_and_print('Features:')
+    log_and_print(X.head())
+    log_and_print('----------------------------------')
+    log_and_print('Target:')
+    log_and_print(y.head())
+    log_and_print('----------------------------------')
 
-    print(f'Number of samples: {len(X)}')
-    print('----------------------------------')
+    log_and_print(f'Number of samples: {len(X)}')
+    log_and_print('----------------------------------')
 
     # Plot histograms of the data
     X.hist(bins=30, figsize=(20, 15))
@@ -144,7 +177,7 @@ def run_XGBoost_pipeline(data='', target='listing_price', features=[],
     # Safe the preprocessed data
     if save_results == True:
         X.to_csv(f'data/{identifier}_X.csv', index=False)
-        print(f'Preprocessed data saved as data/{identifier}_X.csv')
+        log_and_print(f'Preprocessed data saved as data/{identifier}_X.csv')
 
     ### ---------------------------------- ###
 
@@ -152,7 +185,7 @@ def run_XGBoost_pipeline(data='', target='listing_price', features=[],
     ### -- Train the model -- ###
 
 
-    print('Training the model...')
+    log_and_print('Training the model...')
     hyperparameter_cv = KFold(n_splits=cv, shuffle=True, random_state=42)
     model_evaluation_cv = KFold(n_splits=cv, shuffle=True, random_state=42)
 
@@ -165,13 +198,13 @@ def run_XGBoost_pipeline(data='', target='listing_price', features=[],
     #    'colsample_bytree': [0.6, 0.8, 1.0]
     }
 
-    # Print the Hyperparamer grid
-    print('----------------------------------')
+    # log_and_print the Hyperparamer grid
+    log_and_print('----------------------------------')
 
-    print("Hyperparameter grid:")
+    log_and_print("Hyperparameter grid:")
     for param, values in param_grid_xgb.items():
-        print(f"{param}: {values}")
-    print('----------------------------------')
+        log_and_print(f"{param}: {values}")
+    log_and_print('----------------------------------')
 
     xgb = XGBRegressor(random_state=random_state)
 
@@ -183,8 +216,8 @@ def run_XGBoost_pipeline(data='', target='listing_price', features=[],
     all_shap_prices = []
     fold = 1
     for train_idx, test_idx in model_evaluation_cv.split(X):
-        print('----------------------------------')
-        print(f'Training fold [{fold}/{cv}]:')
+        log_and_print('----------------------------------')
+        log_and_print(f'Training fold [{fold}/{cv}]:')
         X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
         y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
 
@@ -199,20 +232,20 @@ def run_XGBoost_pipeline(data='', target='listing_price', features=[],
         mse = mean_squared_error(y_test, y_pred)
         all_mse.append(mse)
 
-        print(f'Mean Squared Error: {mse} for fold [{fold}/{cv}]')
-        print(f'Best hyperparameters: {grid_search.best_params_}')
-        print(f'Estimating SHAP values...')
+        log_and_print(f'Mean Squared Error: {mse} for fold [{fold}/{cv}]')
+        log_and_print(f'Best hyperparameters: {grid_search.best_params_}')
+        log_and_print(f'Estimating SHAP values...')
         
         # Compute SHAP prices for the entire dataset using the best model
         explainer = shap.TreeExplainer(best_model)
         shap_prices = explainer.shap_values(X)
         all_shap_prices.append(shap_prices)
-        print(f'SHAP values estimated for fold [{fold}/{cv}]')
-        print('----------------------------------')
+        log_and_print(f'SHAP values estimated for fold [{fold}/{cv}]')
+        log_and_print('----------------------------------')
         fold += 1
 
-    print('All folds trained')
-    print('Evaluating Model...')
+    log_and_print('All folds trained')
+    log_and_print('Evaluating Model...')
 
     ### --------------------- ###
 
@@ -220,23 +253,25 @@ def run_XGBoost_pipeline(data='', target='listing_price', features=[],
 
     # Calculate Pearson correlation and p-price
     r_score, p_price = pearsonr(all_y_test, all_y_pred)
-    print(f'Pearson correlation: {r_score}, p-value: {p_price}')
+    log_and_print(f'Pearson correlation: {r_score}, p-value: {p_price}')
 
     average_mse = np.mean(all_mse)
-    print(f'Nested CV Mean Squared Error: {average_mse}')
+    log_and_print(f'Nested CV Mean Squared Error: {average_mse}')
         
     # Create a dataframe with the results for plotting
     results_df = pd.DataFrame({'y_test': all_y_test, 'y_pred': all_y_pred})
 
     if save_results == True:
-        results_df.to_csv(f'results/{identifier}_results.csv', index=False)
-        print(f'Results saved as results/{identifier}_results.csv')
+        results_df.to_csv(f'{save_path}/{identifier}_results.csv', index=False)
+        log_and_print(f'Results saved as results/{identifier}_results.csv')
         plot_results(results_df, r_score, p_price, save_results=True, save_path=save_path, identifier=identifier)
 
     # Aggregate SHAP prices across folds
     all_shap_prices = np.array(all_shap_prices)
     mean_shap_prices = np.mean(all_shap_prices, axis=0)
-    mean_abs_shap_prices = np.mean(np.abs(mean_shap_prices), axis=0)
+    if save_results:
+        np.save(f'{save_path}/{identifier}_mean_shap_values.npy', mean_shap_prices)
+        log_and_print(f'Mean SHAP values saved as {save_path}/{identifier}_mean_shap_values.npy')
 
     # Plot aggregated SHAP values (Feature impact)
     shap.summary_plot(mean_shap_prices, features=X, feature_names=X.columns, show=False, max_display=40)
