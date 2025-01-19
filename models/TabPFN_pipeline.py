@@ -11,6 +11,7 @@ from sklearn.metrics import r2_score
 from sklearn.model_selection import cross_val_score
 from typing import Tuple, Dict
 import shap
+from add_custom_features import AddCustomFeatures
 
 # Setting features and target
 Feature_Selection = {
@@ -38,18 +39,29 @@ class TabPFNRegression():
             test_split_size:float = test_split_size):
         
         self.reg_model = None
-        X = data_df[Feature_Selection['features']]
-        y = data_df[Feature_Selection['target']]
+        X,y = self.model_specific_preprocess(data_df)
         self.train_split = train_test_split(X, y, test_size=test_split_size, random_state=42)
         self.metrics = None
 
+    def model_specific_preprocess(self, data_df: pd.DataFrame) -> Tuple:
+        """ Preprocess the data for the TabPFN model"""
+        # Ensure all features are numeric
+        data_df = data_df.dropna(subset=Feature_Selection['features'] + [Feature_Selection['target']])
+        X = data_df[Feature_Selection['features']]
+        y = data_df[Feature_Selection['target']]
+        X = X.apply(pd.to_numeric, errors='coerce')
+        # Remove dollar sign and convert to float
+        if y.dtype == object:
+            y = y.replace('[\$,]', '', regex=True).astype(float)
+    
+        return X, y
+    
     def fit(self) -> None:
         """ Train and predict using Linear Regression and Random Forest"""
     
         X_train, X_test, y_train, y_test = self.train_split
         reg = TabPFNRegressor()
         reg.fit(X_train, y_train)
-
         self.reg_model = reg
         return self.reg_model
        
@@ -127,8 +139,11 @@ class TabPFNRegression():
         pass
 
 if __name__ == "__main__":
-    folder_path = "/home/georg/Documents/Master/Data_Literacy/DataLit-InsideAirbnb/"
-    data_df = pd.read_csv(folder_path + "/data/test_run_X.csv")
+    folder_path = "/Users/georgtirpitz/Documents/Data_Literacy"
+    data_df = pd.read_csv(folder_path + "/city_listings.csv")
+    add_custom_features = ['distance_to_city_center', 'average_review_length']
+    Feature_Adder = AddCustomFeatures(data_df, add_custom_features)
+    data_df = Feature_Adder.return_data()
     model = TabPFNRegression(data_df)
     model.fit()
     preds = model.predict(data_df)
