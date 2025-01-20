@@ -6,7 +6,7 @@ from XGBoost_pipeline import run_XGBoost_pipeline
 
 #######-- Set the parameters for the analysis --#######
 # Preprocessed data
-data = '/home/frieder/pCloudDrive/AirBnB_Daten/Preprocessed_data/germany_preprocessed/berlin/city_listings.csv'
+data = '/home/frieder/pCloudDrive/AirBnB_Daten/Preprocessed_data/germany_preprocessed/munich/city_listings.csv'
 
 # Name of the variable to predict in the data table
 target = 'price'
@@ -33,7 +33,7 @@ save_results = True
 safe_path = 'results/'
 
 # Identifier
-identifier = 'test_run'
+identifier = 'Munich_prediction'
 
 # Random state
 random_state = 42

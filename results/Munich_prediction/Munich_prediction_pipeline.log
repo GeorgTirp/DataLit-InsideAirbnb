@@ -1,0 +1,110 @@
+2025-01-20 14:03:32,579 - INFO - Starting the XGBoost pipeline...
+2025-01-20 14:03:32,579 - INFO - ----------------------------------
+2025-01-20 14:03:32,579 - INFO - Parameters:
+2025-01-20 14:03:32,579 - INFO - Data: /home/frieder/pCloudDrive/AirBnB_Daten/Preprocessed_data/germany_preprocessed/munich/city_listings.csv
+2025-01-20 14:03:32,579 - INFO - Target: price
+2025-01-20 14:03:32,579 - INFO - Features: ['accommodates', 'bathrooms', 'bedrooms', 'beds', 'review_scores_value']
+2025-01-20 14:03:32,579 - INFO - Outlier removal: False
+2025-01-20 14:03:32,579 - INFO - CV: 5
+2025-01-20 14:03:32,579 - INFO - Correlation threshold: 0.9
+2025-01-20 14:03:32,579 - INFO - Save results: True
+2025-01-20 14:03:32,579 - INFO - Additional custom features: ['distance_to_city_center', 'average_review_length']
+2025-01-20 14:03:32,579 - INFO - Save path: results//Munich_prediction
+2025-01-20 14:03:32,579 - INFO - Identifier: Munich_prediction
+2025-01-20 14:03:32,579 - INFO - Random state: 42
+2025-01-20 14:03:32,579 - INFO - ----------------------------------
+2025-01-20 14:03:47,665 - INFO - Using the following features: ['accommodates', 'bathrooms', 'bedrooms', 'beds', 'review_scores_value']
+2025-01-20 14:03:47,666 - INFO - Index(['Unnamed: 0', 'city', 'listing_url', 'scrape_id', 'last_scraped',
+       'source', 'name', 'description', 'neighborhood_overview', 'picture_url',
+       'host_id', 'host_url', 'host_name', 'host_since', 'host_location',
+       'host_about', 'host_response_time', 'host_response_rate',
+       'host_acceptance_rate', 'host_is_superhost', 'host_thumbnail_url',
+       'host_picture_url', 'host_neighbourhood', 'host_listings_count',
+       'host_total_listings_count', 'host_verifications',
+       'host_has_profile_pic', 'host_identity_verified', 'neighbourhood',
+       'neighbourhood_cleansed', 'neighbourhood_group_cleansed', 'latitude',
+       'longitude', 'property_type', 'room_type', 'accommodates', 'bathrooms',
+       'bathrooms_text', 'bedrooms', 'beds', 'amenities', 'price',
+       'minimum_nights', 'maximum_nights', 'minimum_minimum_nights',
+       'maximum_minimum_nights', 'minimum_maximum_nights',
+       'maximum_maximum_nights', 'minimum_nights_avg_ntm',
+       'maximum_nights_avg_ntm', 'calendar_updated', 'has_availability',
+       'availability_30', 'availability_60', 'availability_90',
+       'availability_365', 'calendar_last_scraped', 'number_of_reviews',
+       'number_of_reviews_ltm', 'number_of_reviews_l30d', 'first_review',
+       'last_review', 'review_scores_rating', 'review_scores_accuracy',
+       'review_scores_cleanliness', 'review_scores_checkin',
+       'review_scores_communication', 'review_scores_location',
+       'review_scores_value', 'license', 'instant_bookable',
+       'calculated_host_listings_count',
+       'calculated_host_listings_count_entire_homes',
+       'calculated_host_listings_count_private_rooms',
+       'calculated_host_listings_count_shared_rooms', 'reviews_per_month',
+       'comments', 'distance_to_city_center', 'average_review_length'],
+      dtype='object')
+2025-01-20 14:03:47,666 - INFO - ['accommodates', 'bathrooms', 'bedrooms', 'beds', 'review_scores_value', 'distance_to_city_center', 'average_review_length']
+2025-01-20 14:03:47,667 - INFO - Features:
+2025-01-20 14:03:47,672 - INFO -    accommodates  bathrooms  bedrooms  beds  review_scores_value  distance_to_city_center  average_review_length
+0             2        1.0       1.0   1.0                 4.73                 0.076859              54.880952
+1             6        1.0       1.0   1.0                 4.61                 0.077486              53.337838
+2             2        1.0       1.0   1.0                 4.44                 0.096532              59.243902
+3             4        1.0       1.0   2.0                 4.91                 0.046987              58.158730
+4             2        1.0       1.0   1.0                 4.79                 0.012509              40.459459
+2025-01-20 14:03:47,676 - INFO - ----------------------------------
+2025-01-20 14:03:47,676 - INFO - Target:
+2025-01-20 14:03:47,677 - INFO - 0     95.0
+1    145.0
+2     86.0
+3    120.0
+4    129.0
+Name: price, dtype: float64
+2025-01-20 14:03:47,677 - INFO - ----------------------------------
+2025-01-20 14:03:47,677 - INFO - Number of samples: 5755
+2025-01-20 14:03:47,677 - INFO - ----------------------------------
+2025-01-20 14:03:53,526 - INFO - Preprocessed data saved as data/Munich_prediction_X.csv
+2025-01-20 14:03:53,526 - INFO - Training the model...
+2025-01-20 14:03:53,526 - INFO - ----------------------------------
+2025-01-20 14:03:53,526 - INFO - Hyperparameter grid:
+2025-01-20 14:03:53,526 - INFO - learning_rate: [0.001, 0.01, 0.1, 0.2]
+2025-01-20 14:03:53,526 - INFO - ----------------------------------
+2025-01-20 14:03:53,526 - INFO - ----------------------------------
+2025-01-20 14:03:53,527 - INFO - Training fold [1/5]:
+2025-01-20 14:03:55,913 - INFO - Mean Squared Error: 19830.35485877209 for fold [1/5]
+2025-01-20 14:03:55,914 - INFO - Best hyperparameters: {'learning_rate': 0.1}
+2025-01-20 14:03:55,914 - INFO - Estimating SHAP values...
+2025-01-20 14:03:56,464 - INFO - SHAP values estimated for fold [1/5]
+2025-01-20 14:03:56,464 - INFO - ----------------------------------
+2025-01-20 14:03:56,464 - INFO - ----------------------------------
+2025-01-20 14:03:56,465 - INFO - Training fold [2/5]:
+2025-01-20 14:03:56,897 - INFO - Mean Squared Error: 19700.554064257743 for fold [2/5]
+2025-01-20 14:03:56,897 - INFO - Best hyperparameters: {'learning_rate': 0.1}
+2025-01-20 14:03:56,898 - INFO - Estimating SHAP values...
+2025-01-20 14:03:57,425 - INFO - SHAP values estimated for fold [2/5]
+2025-01-20 14:03:57,425 - INFO - ----------------------------------
+2025-01-20 14:03:57,425 - INFO - ----------------------------------
+2025-01-20 14:03:57,425 - INFO - Training fold [3/5]:
+2025-01-20 14:03:57,897 - INFO - Mean Squared Error: 17434.54892505721 for fold [3/5]
+2025-01-20 14:03:57,897 - INFO - Best hyperparameters: {'learning_rate': 0.1}
+2025-01-20 14:03:57,897 - INFO - Estimating SHAP values...
+2025-01-20 14:03:58,358 - INFO - SHAP values estimated for fold [3/5]
+2025-01-20 14:03:58,358 - INFO - ----------------------------------
+2025-01-20 14:03:58,358 - INFO - ----------------------------------
+2025-01-20 14:03:58,358 - INFO - Training fold [4/5]:
+2025-01-20 14:03:58,972 - INFO - Mean Squared Error: 18559.51512738721 for fold [4/5]
+2025-01-20 14:03:58,973 - INFO - Best hyperparameters: {'learning_rate': 0.1}
+2025-01-20 14:03:58,973 - INFO - Estimating SHAP values...
+2025-01-20 14:03:59,437 - INFO - SHAP values estimated for fold [4/5]
+2025-01-20 14:03:59,437 - INFO - ----------------------------------
+2025-01-20 14:03:59,437 - INFO - ----------------------------------
+2025-01-20 14:03:59,438 - INFO - Training fold [5/5]:
+2025-01-20 14:03:59,884 - INFO - Mean Squared Error: 18314.48624812093 for fold [5/5]
+2025-01-20 14:03:59,884 - INFO - Best hyperparameters: {'learning_rate': 0.1}
+2025-01-20 14:03:59,884 - INFO - Estimating SHAP values...
+2025-01-20 14:04:00,363 - INFO - SHAP values estimated for fold [5/5]
+2025-01-20 14:04:00,364 - INFO - ----------------------------------
+2025-01-20 14:04:00,364 - INFO - All folds trained
+2025-01-20 14:04:00,364 - INFO - Evaluating Model...
+2025-01-20 14:04:00,367 - INFO - Pearson correlation: 0.6655061861818883, p-value: 0.0
+2025-01-20 14:04:00,367 - INFO - Nested CV Mean Squared Error: 18767.891844719037
+2025-01-20 14:04:00,376 - INFO - Results saved as results/Munich_prediction_results.csv
+2025-01-20 14:04:03,299 - INFO - Mean SHAP values saved as results//Munich_prediction/Munich_prediction_mean_shap_values.npy
