@@ -12,6 +12,7 @@ from sklearn.model_selection import cross_val_score
 from typing import Tuple, Dict
 import shap
 from add_custom_features import AddCustomFeatures
+import matplotlib.pyplot as plt
 
 # Setting features and target
 Feature_Selection = {
@@ -36,12 +37,16 @@ class TabPFNRegression():
             self,
             data_df: pd.DataFrame, 
             Feature_Selection: dict= Feature_Selection, 
-            test_split_size:float = test_split_size):
+            test_split_size:float = test_split_size,
+            save_path: str = None,
+            identifier: str = None):
         
         self.reg_model = None
         X,y = self.model_specific_preprocess(data_df)
         self.train_split = train_test_split(X, y, test_size=test_split_size, random_state=42)
         self.metrics = None
+        self.save_path = save_path
+        self.identifier = identifier
 
     def model_specific_preprocess(self, data_df: pd.DataFrame) -> Tuple:
         """ Preprocess the data for the TabPFN model"""
@@ -65,7 +70,7 @@ class TabPFNRegression():
         self.reg_model = reg
         return self.reg_model
        
-    def predict(self, X: pd.DataFrame) -> Dict:
+    def predict(self, X: pd.DataFrame, save_results=False) -> Dict:
         """ Predict using the trained models (for class extern usage)"""
         if self.reg_model is None:
             raise ValueError("Model not fitted yet")
@@ -74,6 +79,11 @@ class TabPFNRegression():
         X_train, X_test, y_train, y_test = self.train_split
         predictions = self.reg_model.predict(X_test)
         # Get the point estimate
+        results_df = pd.DataFrame({'y_test': y_test, 'y_pred': predictions})
+        if save_results == True:
+            results_df.to_csv(f'{self.save_path}/{self.identifier}_results.csv', index=False)
+
+
         return predictions
 
     def evaluate(self) -> Tuple:
@@ -103,7 +113,7 @@ class TabPFNRegression():
 
         return tabpfn_metrics
     
-    def feature_importance(self, top_n: int = 10) -> Dict:
+    def feature_importance(self, save_results=True) -> Dict:
         """ Return the feature importance for the Random Forest and linear model"""
         X_train, X_test, y_train, y_test = self.train_split
         def loco_importances(self, X_train, y_test):
@@ -132,7 +142,29 @@ class TabPFNRegression():
         shap_attributions = shap_importances(self, X_train, y_test)
         loco_attributions = loco_importances(self, X_train, y_test)
 
-        return loco_attributions
+    
+        if save_results:
+            np.save(f'{self.save_path}/{self.identifier}_mean_shap_values.npy', shap_attributions)
+            #log_and_print(f'Mean SHAP values saved as {self.save_path}/{self.identifier}_mean_shap_values.npy')
+
+        # Plot aggregated SHAP values (Feature impact)
+        plt.title(f'{identifier} SHAP Summary Plot (Aggregated)', fontsize=16)
+        if save_results:
+            plt.subplots_adjust(top=0.90)
+            plt.savefig(f'{self.save_path}/{self.identifier}_shap_aggregated_beeswarm.png')
+            plt.close()
+
+
+        # Plot aggregated SHAP values as bar plot (Feature importance)
+        shap.summary_plot(shap_attributions, X_train, plot_type='bar', feature_names=X_train.columns, show=False, max_display=40)
+        plt.title(f'{identifier} SHAP Summary Plot (Aggregated)', fontsize=16)
+        if save_results:
+            plt.subplots_adjust(top=0.90)
+            plt.savefig(f'{self.save_path}/{identifier}_shap_aggregated_bar.png')
+            plt.close()
+        else:
+            plt.show()
+        return loco_attributions, shap_attributions
 
     def plot():
         """ Plot """
@@ -141,6 +173,8 @@ class TabPFNRegression():
 if __name__ == "__main__":
     folder_path = "/Users/georgtirpitz/Documents/Data_Literacy"
     data_df = pd.read_csv(folder_path + "/city_listings.csv")
+    safe_path = folder_path + "/results"
+    identifier = "tabpfn"
     add_custom_features = ['distance_to_city_center', 'average_review_length']
     Feature_Adder = AddCustomFeatures(data_df, add_custom_features)
     data_df = Feature_Adder.return_data()
