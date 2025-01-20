@@ -8,8 +8,8 @@ from sklearn.model_selection import cross_val_score
 from add_custom_features import AddCustomFeatures
 #from preprocessing.preprocessing_test import preprocess_data
 from typing import Tuple, Dict
-
-
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 # Setting Hyperparameters and features
@@ -38,13 +38,17 @@ class RegressionModels:
             data_df: pd.DataFrame, 
             rf_hparams: dict = RandomForest_Hparams, 
             Feature_Selection: dict= Feature_Selection, 
-            test_split_size:float = test_split_size):
+            test_split_size:float = test_split_size,
+            save_path: str = None,
+            identifier: str = None):
         
         self.rf_hparams = rf_hparams
         self.linear_model = None
         self.rf_model = None
         X,y = self.model_specific_preprocess(data_df)
         self.train_split = train_test_split(X, y, test_size=test_split_size, random_state=42)
+        self.save_path = save_path
+        self.identifier_rf, self.identifier_linear = identifier
 
     def model_specific_preprocess(self, data_df: pd.DataFrame) -> Tuple:
         """ Preprocess the data for the TabPFN model"""
@@ -76,10 +80,16 @@ class RegressionModels:
         self.linear_model = linear_model
         self.rf_model = rf_model
        
-    def predict(self, X: pd.DataFrame) -> Tuple:
+    def predict(self, X: pd.DataFrame , y: pd.DataFrame, save_results=False) -> Tuple:
         """ Predict using the trained models (for class extern usage)"""
         rf_pred = self.rf_model.predict(X)
         linear_pred = self.linear_model.predict(X)
+        results_df = pd.DataFrame({'y_test': y, 'y_pred':linear_pred})
+        results_df = pd.DataFrame({'y_test': y, 'y_pred': rf_pred})
+        if save_results == True:
+            results_df.to_csv(f'{self.save_path}/{self.identifier_rf}_results.csv', index=False)
+        if save_results == True:
+            results_df.to_csv(f'{self.save_path}/{self.identifier_linear}_results.csv', index=False)
         return rf_pred, linear_pred
 
     def evaluate(self) -> Tuple:
@@ -120,10 +130,10 @@ class RegressionModels:
             'r2': rf_r2,
             'cv_mean_score': rf_cv_mean_score
         }
-
+        
         return linear_metrics, rf_metrics
     
-    def feature_importance(self, top_n: int = 10) -> Tuple[Dict, Dict]:
+    def feature_importance(self, top_n: int = 10, save_results = True) -> Tuple[Dict, Dict]:
         """ Return the feature importance for the Random Forest and linear model"""
         # Get attributions
         rf_attribution = self.rf_model.feature_importances_
@@ -135,6 +145,11 @@ class RegressionModels:
         # Get top n features
         rf_top_features = {feature_names[i]: rf_attribution[i] for i in rf_indices}
         linear_top_features = {feature_names[i]: linear_attribution[i] for i in linear_indices}
+
+        if save_results:
+            np.save(f'{self.save_path}/{self.identifier}_feature_importance.npy', rf_top_features)
+        if save_results:
+            np.save(f'{self.save_path}/{self.identifier}_feature_importance.npy', linear_top_features)
         return rf_top_features, linear_top_features
 
     def plot():
