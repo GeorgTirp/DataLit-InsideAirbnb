@@ -14,6 +14,7 @@ author = 'Georg Tirpitz, Nils Klute, Matthis Nommensen, Frieder Wizgall'
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = []
+html_logo = "_static/logo.png"
 
 templates_path = ['_templates']
 exclude_patterns = []
