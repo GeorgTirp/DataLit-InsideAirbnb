@@ -14,22 +14,7 @@ import shap
 from add_custom_features import AddCustomFeatures
 import matplotlib.pyplot as plt
 
-# Setting features and target
-Feature_Selection = {
-    'features': [
-        "accommodates",
-        "bathrooms",
-        "bedrooms",
-        "beds",
-        "review_scores_value",
-        "distance_to_city_center",
-        "average_review_length"],
 
-    'target': 'price'
-}
-
-# Setting test split size
-test_split_size= 0.2
 
 class TabPFNRegression():
     """ Fit, evaluate, and get attributions regression models (current: Random Forest and Linear Regression)"""
@@ -144,7 +129,11 @@ class TabPFNRegression():
 
     
         if save_results:
-            np.save(f'{self.save_path}/{self.identifier}_mean_shap_values.npy', shap_attributions)
+            np.save(f'{self.save_path}/{self.identifier}_shap_values.npy', shap_attributions)
+            #log_and_print(f'Mean SHAP values saved as {self.save_path}/{self.identifier}_mean_shap_values.npy')
+        
+        if save_results:
+            np.save(f'{self.save_path}/{self.identifier}_shap_values.npy', loco_attributions)
             #log_and_print(f'Mean SHAP values saved as {self.save_path}/{self.identifier}_mean_shap_values.npy')
 
         # Plot aggregated SHAP values (Feature impact)
@@ -175,12 +164,28 @@ if __name__ == "__main__":
     data_df = pd.read_csv(folder_path + "/city_listings.csv")
     safe_path = folder_path + "/results"
     identifier = "tabpfn"
+    # Setting features and target
+    Feature_Selection = {
+        'features': [
+            "accommodates",
+            "bathrooms",
+            "bedrooms",
+            "beds",
+            "review_scores_value",
+            "distance_to_city_center",
+            "average_review_length"],
+
+        'target': 'price'
+    }
+
+    # Setting test split size
+    test_split_size= 0.2
     add_custom_features = ['distance_to_city_center', 'average_review_length']
-    Feature_Adder = AddCustomFeatures(data_df, add_custom_features)
+    Feature_Adder = AddCustomFeatures(data_df, add_custom_features, Feature_Selection, test_split_size, safe_path, identifier)
     data_df = Feature_Adder.return_data()
     model = TabPFNRegression(data_df)
     model.fit()
     preds = model.predict(data_df)
     metrics = model.evaluate()
     importances = model.feature_importance()
-    print(preds.shape)
+    
