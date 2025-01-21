@@ -13,7 +13,7 @@ from typing import Tuple, Dict
 import shap
 from add_custom_features import AddCustomFeatures
 import matplotlib.pyplot as plt
-
+import logging
 
 
 class TabPFNRegression():
@@ -21,8 +21,8 @@ class TabPFNRegression():
     def __init__(
             self,
             data_df: pd.DataFrame, 
-            Feature_Selection: dict= Feature_Selection, 
-            test_split_size:float = test_split_size,
+            Feature_Selection: dict, 
+            test_split_size:float = 0.2,
             save_path: str = None,
             identifier: str = None):
         
@@ -32,11 +32,12 @@ class TabPFNRegression():
         self.metrics = None
         self.save_path = save_path
         self.identifier = identifier
+        self.Feature_Selection = Feature_Selection
 
     def model_specific_preprocess(self, data_df: pd.DataFrame) -> Tuple:
         """ Preprocess the data for the TabPFN model"""
         # Ensure all features are numeric
-        data_df = data_df.dropna(subset=Feature_Selection['features'] + [Feature_Selection['target']])
+        data_df = data_df.dropna(subset=self.Feature_Selection['features'] + [self.Feature_Selection['target']])
         X = data_df[Feature_Selection['features']]
         y = data_df[Feature_Selection['target']]
         X = X.apply(pd.to_numeric, errors='coerce')
@@ -57,7 +58,7 @@ class TabPFNRegression():
         """Predict using the trained model"""
         if self.reg_model is None:
             raise ValueError("Model not fitted yet")
-
+        #X_in = X_in[Feature_Selection['features']]
         predictions = self.reg_model.predict(X_in)
 
         # Optionally save predictions
@@ -94,61 +95,77 @@ class TabPFNRegression():
 
         return tabpfn_metrics
     
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
+
     def feature_importance(self, save_results=True) -> Dict:
-        """ Return the feature importance for the Random Forest and linear model"""
+        """Return the feature importance for the Random Forest and linear model"""
+        logging.info("Starting feature importance evaluation.")
+
         X_train, X_test, y_train, y_test = self.train_split
+
         def loco_importances(self, X_train, y_test):
+            logging.info("Starting Loco importance evaluation...")
             importances = {}
-            for feature in X_train.columns:
+            for i, feature in enumerate(X_train.columns):
+                logging.info(f"Evaluating Loco importance for feature {i + 1}/{len(X_train.columns)}: {feature}")
+
+                # Remove the feature from the data
                 X_train_loco = X_train.drop(columns=[feature])
                 X_test_loco = X_test.drop(columns=[feature])
-                
+
+                # Train the model and get predictions
                 self.reg_model.fit(X_train_loco, y_train)
                 loco_pred = self.reg_model.predict(X_test_loco)
+
+                # Compute the MSE and store the importance
                 loco_mse = mean_squared_error(y_test, loco_pred)
-                
                 importances[feature] = abs(loco_mse - self.metrics['mse']) / self.metrics['mse']
-            
+
+                # Log progress for every 10th feature evaluated
+                if (i + 1) % 10 == 0 or (i + 1) == len(X_train.columns):
+                    logging.info(f"Progress: {i + 1}/{len(X_train.columns)} features evaluated.")
+
+            logging.info("Finished Loco importance evaluation.")
             return importances
 
         def shap_importances(self, X_train, y_test):
-            
+            logging.info("Starting SHAP importance evaluation...")
+
+            # Initialize SHAP
             shap.initjs()
-            background_data = X_train.sample(100, random_state=42)
-            explainer = shap.KernelExplainer(self.reg_model, background_data)
+
+            # Sample background data
+            background_data = X_train.sample(25, random_state=42)
+            logging.info("Background data for SHAP initialized.")
+
+            # Initialize SHAP Explainer
+            explainer = shap.KernelExplainer(self.reg_model.predict, background_data)
+            logging.info("SHAP explainer initialized.")
+
+            # Calculate SHAP values
             shap_values = explainer(X_train)
+            logging.info("SHAP values calculated.")
+
+            # Plot SHAP summary
             shap.summary_plot(shap_values, X_train)
+            logging.info("SHAP summary plot generated.")
+        
             return shap_values
-        
+
+        # Run Loco and SHAP importance evaluations
+        logging.info("Evaluating SHAP feature importances...")
         shap_attributions = shap_importances(self, X_train, y_test)
-        loco_attributions = loco_importances(self, X_train, y_test)
-
+        logging.info("SHAP importance evaluation completed.")
     
+        logging.info("Evaluating LOCO feature importances...")
+        loco_attributions = loco_importances(self, X_train, y_test)
+        logging.info("LOCO importance evaluation completed.")
+    
+        # Save results if specified
         if save_results:
-            np.save(f'{self.save_path}/{self.identifier}_shap_values.npy', shap_attributions)
-            #log_and_print(f'Mean SHAP values saved as {self.save_path}/{self.identifier}_mean_shap_values.npy')
-        
-        if save_results:
-            np.save(f'{self.save_path}/{self.identifier}_shap_values.npy', loco_attributions)
-            #log_and_print(f'Mean SHAP values saved as {self.save_path}/{self.identifier}_mean_shap_values.npy')
-
-        # Plot aggregated SHAP values (Feature impact)
-        plt.title(f'{identifier} SHAP Summary Plot (Aggregated)', fontsize=16)
-        if save_results:
-            plt.subplots_adjust(top=0.90)
-            plt.savefig(f'{self.save_path}/{self.identifier}_shap_aggregated_beeswarm.png')
-            plt.close()
-
-
-        # Plot aggregated SHAP values as bar plot (Feature importance)
-        shap.summary_plot(shap_attributions, X_train, plot_type='bar', feature_names=X_train.columns, show=False, max_display=40)
-        plt.title(f'{identifier} SHAP Summary Plot (Aggregated)', fontsize=16)
-        if save_results:
-            plt.subplots_adjust(top=0.90)
-            plt.savefig(f'{self.save_path}/{identifier}_shap_aggregated_bar.png')
-            plt.close()
-        else:
-            plt.show()
+            logging.info(f"Saving results to {self.save_path}/{self.identifier}_mean_shap_values.npy")
+            np.save(f'{self.save_path}/{self.identifier}_mean_shap_values.npy', shap_attributions)
+    
         return loco_attributions, shap_attributions
 
     def plot():
