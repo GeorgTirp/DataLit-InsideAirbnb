@@ -48,26 +48,22 @@ class TabPFNRegression():
     
     def fit(self) -> None:
         """ Train and predict using Linear Regression and Random Forest"""
-    
-        X_train, X_test, y_train, y_test = self.train_split
         reg = TabPFNRegressor()
-        reg.fit(X_train, y_train)
+        reg.fit(self.X, self.y)
         self.reg_model = reg
         return self.reg_model
        
-    def predict(self, X: pd.DataFrame, save_results=False) -> Dict:
-        """ Predict using the trained models (for class extern usage)"""
+    def predict(self, X_in: pd.DataFrame, save_results=False) -> Dict:
+        """Predict using the trained model"""
         if self.reg_model is None:
             raise ValueError("Model not fitted yet")
-        
-        # Fit the Inference distribution
-        X_train, X_test, y_train, y_test = self.train_split
-        predictions = self.reg_model.predict(X_test)
-        # Get the point estimate
-        results_df = pd.DataFrame({'y_test': y_test, 'y_pred': predictions})
-        if save_results == True:
-            results_df.to_csv(f'{self.save_path}/{self.identifier}_results.csv', index=False)
 
+        predictions = self.reg_model.predict(X_in)
+
+        # Optionally save predictions
+        if save_results:
+            results_df = pd.DataFrame({'y_pred': predictions})
+            results_df.to_csv(f'{self.save_path}/{self.identifier}_results.csv', index=False)
 
         return predictions
 
