@@ -15,6 +15,8 @@ from add_custom_features import AddCustomFeatures
 import matplotlib.pyplot as plt
 import logging
 from tqdm import tqdm
+import torch
+
 
 class TabPFNRegression():
     """ Fit, evaluate, and get attributions regression models (current: Random Forest and Linear Regression)"""
@@ -31,15 +33,17 @@ class TabPFNRegression():
         self.Feature_Selection = Feature_Selection
 
         self.reg_model = None
-        X,y = self.model_specific_preprocess(data_df)
-        self.train_split = train_test_split(X, y, test_size=test_split_size, random_state=42)
+        self.X, self.y = self.model_specific_preprocess(data_df)
+        self.train_split = train_test_split(self.X, self.y, test_size=test_split_size, random_state=42)
         self.metrics = None
         
 
-    def model_specific_preprocess(self, data_df: pd.DataFrame) -> Tuple:
+    def model_specific_preprocess(self, data_df: pd.DataFrame, Feature_Selection: dict = None) -> Tuple:
         """ Preprocess the data for the TabPFN model"""
         # Ensure all features are numeric
-        data_df = data_df.dropna(subset=self.Feature_Selection['features'] + [self.Feature_Selection['target']])
+        if Feature_Selection is None:
+            Feature_Selection = self.Feature_Selection
+        data_df = data_df.dropna(subset=Feature_Selection['features'] + [Feature_Selection['target']])
         X = data_df[Feature_Selection['features']]
         y = data_df[Feature_Selection['target']]
         X = X.apply(pd.to_numeric, errors='coerce')
@@ -137,7 +141,7 @@ class TabPFNRegression():
             shap.initjs()
 
             # Sample background data
-            background_data = X_train.sample(25, random_state=42)
+            background_data = X_train.sample(50, random_state=42)
             logging.info("Background data for SHAP initialized.")
 
             # Initialize SHAP Explainer
@@ -148,7 +152,8 @@ class TabPFNRegression():
             shap_values = []
             for i in tqdm(range(len(X_train)), desc="Computing SHAP values", unit="sample"):
                 shap_values.append(explainer.shap_values(X_train.iloc[i:i+1]))
-
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
             # Plot SHAP summary
             shap.summary_plot(shap_values, X_train)
             logging.info("SHAP summary plot generated.")
@@ -176,9 +181,10 @@ class TabPFNRegression():
         pass
 
 if __name__ == "__main__":
-    folder_path = "/Users/georgtirpitz/Documents/Data_Literacy"
+    #folder_path = "/Users/georgtirpitz/Documents/Data_Literacy"
+    folder_path = "/home/georg/Documents/Master/Data_Literacy"
     data_df = pd.read_csv(folder_path + "/city_listings.csv")
-    safe_path = folder_path + "/results"
+    safe_path = folder_path + "/results" + "test"
     identifier = "tabpfn"
     # Setting features and target
     Feature_Selection = {
@@ -197,11 +203,12 @@ if __name__ == "__main__":
     # Setting test split size
     test_split_size= 0.2
     add_custom_features = ['distance_to_city_center', 'average_review_length']
-    Feature_Adder = AddCustomFeatures(data_df, add_custom_features, Feature_Selection, test_split_size, safe_path, identifier)
+    Feature_Adder = AddCustomFeatures(data_df, add_custom_features)
     data_df = Feature_Adder.return_data()
-    model = TabPFNRegression(data_df)
+    model = TabPFNRegression(data_df, Feature_Selection, test_split_size, safe_path, identifier)
+    X, y = model.model_specific_preprocess(data_df, Feature_Selection)
     model.fit()
-    preds = model.predict(data_df)
+    preds = model.predict(X)
     metrics = model.evaluate()
     importances = model.feature_importance()
     
