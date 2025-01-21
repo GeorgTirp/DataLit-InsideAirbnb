@@ -14,7 +14,7 @@ import shap
 from add_custom_features import AddCustomFeatures
 import matplotlib.pyplot as plt
 import logging
-
+from tqdm import tqdm
 
 class TabPFNRegression():
     """ Fit, evaluate, and get attributions regression models (current: Random Forest and Linear Regression)"""
@@ -145,8 +145,9 @@ class TabPFNRegression():
             logging.info("SHAP explainer initialized.")
 
             # Calculate SHAP values
-            shap_values = explainer(X_train)
-            logging.info("SHAP values calculated.")
+            shap_values = []
+            for i in tqdm(range(len(X_train)), desc="Computing SHAP values", unit="sample"):
+                shap_values.append(explainer.shap_values(X_train.iloc[i:i+1]))
 
             # Plot SHAP summary
             shap.summary_plot(shap_values, X_train)
