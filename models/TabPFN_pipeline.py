@@ -26,13 +26,15 @@ class TabPFNRegression():
             save_path: str = None,
             identifier: str = None):
         
+        self.save_path = save_path
+        self.identifier = identifier
+        self.Feature_Selection = Feature_Selection
+
         self.reg_model = None
         X,y = self.model_specific_preprocess(data_df)
         self.train_split = train_test_split(X, y, test_size=test_split_size, random_state=42)
         self.metrics = None
-        self.save_path = save_path
-        self.identifier = identifier
-        self.Feature_Selection = Feature_Selection
+        
 
     def model_specific_preprocess(self, data_df: pd.DataFrame) -> Tuple:
         """ Preprocess the data for the TabPFN model"""
