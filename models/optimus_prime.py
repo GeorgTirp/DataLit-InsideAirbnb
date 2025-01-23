@@ -33,7 +33,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim
-from rtdl_revisiting_models import FTTransformer
+from rtdl_revisiting_models import FTTransformer # From https://github.com/yandex-research/rtdl-revisiting-models/blob/main/package/README.md
 warnings.resetwarnings()
 
 
