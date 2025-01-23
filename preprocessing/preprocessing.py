@@ -16,29 +16,37 @@ from io import BytesIO
 import torchvision.transforms as transforms
 import torchvision.models as models
 from torchvision.models import ResNet50_Weights
-
-PATH_TO_REPO = "C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy/DataLit-InsideAirbnb"
-RAW_DATA_DIR = PATH_TO_REPO + '/data/raw_data'
-SAVING_DIR = PATH_TO_REPO + '/data/preprocessed_data'
-PROCESS_ALL_CITIES = True
-CITY_LIST   = ["berlin"] #list cities which should be processed if not PROCESS_ALL_CITIES
-DEBUG_MODE = False # determines if preprocessing is in DEBUG_MODE (no processing of file --> execution of main-function)
+import logging
 
 
+DEBUG_MODE = False
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 
 class InsideAirbnbDataset:
+    """
+    A dataset class for processing and handling Airbnb data collected from https://insideairbnb.com/get-the-data/.
+    Processing multiple cities at once is supported.
+    Data can either be read in from raw data files or from already (via this script) preprocessed data files.
+
+
+    Important Attributes:
+        raw_data_dict (Dict): If files are read in from raw data directory, raw_data_dict contains them.
+        all_cities_listings (pd.DataFrame): Pandas Dataframe containing all listings of respective cities.
+    
+    """
     def __init__(
             self,
             raw_data_dir: str = "/kaggle/input/berlin-amsterdam/raw_data",
             process_all_cities: bool = True,
             cities_to_process: list   = ["berlin"],
-            read_from_raw = True,
-            preprocessed_data_dir = 'preprocessed_data',
-            file_name = 'single_city_listing.csv'):
+            read_from_raw: bool = True,
+            preprocessed_data_dir: Dict = 'preprocessed_data',
+            file_name: str = 'single_city_listing.csv'):
         
         self.process_all_cities = process_all_cities
-        self.cities_to_process = cities_to_process
+        self._cities_to_process = cities_to_process
         
+        # determine whether data is read in from raw data files or already preprocessed (via this script) data files
         if read_from_raw:
             self.raw_data_dir = raw_data_dir
     
@@ -55,22 +63,22 @@ class InsideAirbnbDataset:
             self.all_cities_listings = self._read_preprocessed_listings(file_name=file_name)
         
     
-    def _read_data_from_files(self):
-        print(f"reading in data from {self.raw_data_dir}")
+    def _read_data_from_files(self) -> Dict:
+        logging.info(f"reading in data from {self.raw_data_dir}")
         cities_in_raw_data_dir = os.listdir(self.raw_data_dir)
 
-        if not self.process_all_cities and not set(self.cities_to_process).issubset(cities_in_raw_data_dir):
+        if not self.process_all_cities and not set(self._cities_to_process).issubset(cities_in_raw_data_dir):
             raise ValueError("not all requested citys are in directory")
         
         raw_data_dict = {}
 
         if self.process_all_cities:
-            self.cities_to_process = cities_in_raw_data_dir
+            self._cities_to_process = cities_in_raw_data_dir
 
-        self.cities = self.cities_to_process
+        self.cities = self._cities_to_process
         
-        for city in self.cities_to_process:
-            print(f"collecting data for city: {city}")
+        for city in self._cities_to_process:
+            logging.info(f"collecting data for city: {city}")
             raw_data_dict[city] = {}
             city_dir = self.raw_data_dir + '/' + city
             file_names = [f for f in os.listdir(city_dir) if os.path.isfile(os.path.join(city_dir, f))]
@@ -98,15 +106,15 @@ class InsideAirbnbDataset:
 
                     raw_data_dict[city][file_name] = df
 
-        print(f"collecting data process done")
+        logging.info(f"collecting data process done")
 
         return raw_data_dict
 
-    def _integrate_reviews_into_listings(self):
-        print(f"initializing reviews collection process and integration into city listings")
+    def _integrate_reviews_into_listings(self) -> None:
+        logging.info(f"initializing reviews collection process and integration into city listings")
         
         for city in self.cities:
-            print(f"current city: {city}")
+            logging.info(f"current city: {city}")
             city_listings = self.raw_data_dict[city]["listings.csv"]
             city_reviews = self.raw_data_dict[city]["reviews.csv"]       
             city_calendar = self.raw_data_dict[city]["calendar.csv"] 
@@ -127,10 +135,10 @@ class InsideAirbnbDataset:
 
                 city_listings.at[index, 'comments'] = comments_with_newline
         
-        print("integration of reviews into cites listings done")
+        logging.info("integration of reviews into cites listings done")
 
-    def _aggregate_city_listings_into_one_df(self):
-        print("initializing aggregation of regional listings into one dataframe")
+    def _aggregate_city_listings_into_one_df(self) -> pd.DataFrame: 
+        logging.info("initializing aggregation of regional listings into one dataframe")
         all_cities_listings = []
 
         for city in self.cities:
@@ -139,11 +147,11 @@ class InsideAirbnbDataset:
             all_cities_listings.append(city_listings)
 
         all_cities_listings = pd.concat(all_cities_listings, ignore_index=True)
-        print("aggregation done")
+        logging.info("aggregation done")
         return all_cities_listings
 
     def filter_listings_and_impute_nan(self,
-                                       meta_data_columns = [
+                                       meta_data_columns: list[str] = [
                                            'listing_url', 
                                            'host_location', 
                                            'scrape_id', 
@@ -160,8 +168,8 @@ class InsideAirbnbDataset:
                                            'calendar_last_scraped', 
                                            'license'
                                        ],
-                                       nan_columns = ['calendar_updated'],
-                                       include_only_reviewed = True):
+                                       nan_columns: list[str] = ['calendar_updated'],
+                                       include_only_reviewed: bool = True) -> None:
         
         all_cities_listings = self.all_cities_listings
         #filter the NaN columns (here are no entries)
@@ -247,18 +255,17 @@ class InsideAirbnbDataset:
         
     
     def add_nlp_embedding(self, 
-                          nlp_col_names = ['name', 'description', 'neighborhood_overview', 'host_about', 'amenities','comments'], 
-                          batch_size = 32):
-        print("initializing NLP embedding process")
-        print(f"batch size: {batch_size}") 
+                          nlp_col_names: list[str] = ['name', 'description', 'neighborhood_overview', 'host_about', 'amenities','comments'], 
+                          batch_size: int = 32) -> None:
+        logging.info(f"initializing NLP embedding process, batch size: {batch_size}")
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         model_name = 'distilbert-base-multilingual-cased'
         tokenizer = tf.AutoTokenizer.from_pretrained(model_name, clean_up_tokenization_spaces=True)
         model = tf.AutoModel.from_pretrained(model_name).to(device)
-        print(f"embeddings are computed using transformer model: {model_name} from hugging face")
+        logging.info(f"embeddings are computed using transformer model: {model_name} from hugging face")
         
         for nlp_col_name in nlp_col_names:
-            print(f"current nlp column: {nlp_col_name}")
+            logging.info(f"current nlp column: {nlp_col_name}")
 
             nlp_col = self.all_cities_listings[nlp_col_name]
             nlp_col_list = []
@@ -319,7 +326,7 @@ class InsideAirbnbDataset:
         print("nlp embedding done")
     
     def dimensionality_reduction(self, 
-                                 col_names = [
+                                 col_names: list[str] = [
                                     'name_emb', 
                                     'description_emb', 
                                     'neighborhood_overview_emb', 
@@ -329,33 +336,33 @@ class InsideAirbnbDataset:
                                     'host_picture_emb',
                                     'picture_emb'
                                  ],
-                                keep_variance = 0.95):
+                                keep_variance: float = 0.95) -> None:
         
-        print("initializing dimensionality reduction")
+        logging.info("initializing dimensionality reduction")
             
         for col_name in col_names:
-            print(f"current embeddings: {col_name}")
+            logging.info(f"current embeddings: {col_name}")
             col = self.all_cities_listings[col_name]
             col_array = np.asarray([np.asarray(entry) for entry in col])
 
             pca = PCA(n_components = keep_variance, svd_solver='full')
             pca.fit(col_array)
             dim_red_col_array = pca.transform(col_array)
-            print(f"used {pca.n_components_ } components for dim reduction to explain {keep_variance*100}% of the data")
+            logging.info(f"used {pca.n_components_ } components for dim reduction to explain {keep_variance*100}% of the data")
             
             dim_red_col_name = col_name + '_dim_red'
             self.all_cities_listings[dim_red_col_name] = list(dim_red_col_array)
-        print("dimensionality reduction done")
+        logging.info("dimensionality reduction done")
 
     def download_images_and_save(self, 
-                            image_url_col_names = ['host_picture_url','picture_url'], 
-                            saving_dir = 'kaggle/working/preprocessed_data/filtered_dataset_images',
-                            process_n_images = -1):
+                            image_url_col_names: list[str] = ['host_picture_url','picture_url'], 
+                            saving_dir: str = 'kaggle/working/preprocessed_data/filtered_dataset_images',
+                            process_n_images: int = -1) -> None:
         
-        print("initializing image embedding process")
+        logging.info("initializing image embedding process")
         for city in self.cities:
             for image_url_col_name in image_url_col_names:
-                print(f"downloading images from web for column '{image_url_col_name}'")
+                logging.info(f"downloading images from web for column '{image_url_col_name}'")
 
                 city_listings = self.all_cities_listings[self.all_cities_listings["city"] == city]
                 image_url_col = city_listings[image_url_col_name]
@@ -389,7 +396,7 @@ class InsideAirbnbDataset:
                             image_list.append(Image.new("RGB", image_size))
                             #response.raise_for_status()
         
-                print(f"pictures from rows {no_access_indices} could not be accessed")
+                logging.info(f"pictures from rows {no_access_indices} could not be accessed")
 
                 image_saving_path = saving_dir + '/' + city + '/' + image_url_col_name
                 if not os.path.exists(image_saving_path):
@@ -400,18 +407,18 @@ class InsideAirbnbDataset:
             
 
     def add_image_embedding(self, 
-                            image_url_col_names = ['host_picture_url','picture_url'], 
-                            batch_size = 32,
-                            read_from_dir = False,
-                            read_dir = 'kaggle/working/preprocessed_data/filtered_dataset_images',
-                            embedd_n_images = -1):
+                            image_url_col_names: list[str] = ['host_picture_url','picture_url'], 
+                            batch_size: int = 32,
+                            read_from_dir: bool = False,
+                            read_dir: str = 'kaggle/working/preprocessed_data/filtered_dataset_images',
+                            embedd_n_images: int = -1) -> None:
         
-        print("initializing image embedding process")
+        logging.info("initializing image embedding process")
         
         for image_url_col_name in image_url_col_names:
             
             if read_from_dir:
-                print(f"reading images from directory for column '{image_url_col_name}'")
+                logging.info(f"reading images from directory for column '{image_url_col_name}'")
                 
                 cities_subdirectories = [d for d in os.listdir(read_dir) if os.path.isdir(os.path.join(read_dir, d))]
 
@@ -432,7 +439,7 @@ class InsideAirbnbDataset:
                     assert len(image_list) == len(self.all_cities_listings)
                     
             else:
-                print(f"downloading images from web for column '{image_url_col_name}'")
+                logging.info(f"downloading images from web for column '{image_url_col_name}'")
                 image_url_col = self.all_cities_listings[image_url_col_name]
                 image_list = []
                 no_access_indices = []
@@ -464,8 +471,8 @@ class InsideAirbnbDataset:
                             image_list.append(Image.new("RGB", image_size))
                             #response.raise_for_status()
         
-                print(f"pictures from rows {no_access_indices} could not be accessed")
-            print("transform images and construct dataloader")
+                logging.info(f"pictures from rows {no_access_indices} could not be accessed")
+            logging.info("transform images and construct dataloader")
     
             normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
@@ -485,7 +492,7 @@ class InsideAirbnbDataset:
             resnet_feature_extractor = torch.nn.Sequential(*modules)
             resnet_feature_extractor.eval()
             
-            print("embedding image data using ResNet50")
+            logging.info("embedding image data using ResNet50")
             feature_embeddings_list = []
        
             for batch in tqdm(data_loader):
@@ -512,19 +519,18 @@ class InsideAirbnbDataset:
     
             valid_feature_embeddings_array = np.asarray(valid_feature_embeddings_list)
             mean_embedding = np.mean(valid_feature_embeddings_array, axis=0)
-            print(f"mean_embedding: {mean_embedding}")
             
             for no_access_index in no_access_indices:
                 feature_embeddings_list[no_access_index] = mean_embedding
     
             self.all_cities_listings[image_col_embedded_name] = feature_embeddings_list
             
-        print("image embedding done")
+        logging.info("image embedding done")
     
     def save_all_cities_listings_to_file(self, 
-                                         file_name = "single_city_listing.csv", 
-                                         saving_dir =  'preprocessed_data',
-                                         single_data_frames = True):
+                                         file_name: str = "single_city_listing.csv", 
+                                         saving_dir: str =  'preprocessed_data',
+                                         single_data_frames: bool = True) -> None:
         
         self.saving_dir = saving_dir
 
@@ -539,23 +545,23 @@ class InsideAirbnbDataset:
                 file_path = city_dir + '/' + file_name 
                 
                 city_listings.to_csv(file_path)
-                print(f"{city} listings saved to path: {file_path}")
+                logging.info(f"{city} listings saved to path: {file_path}")
         else:
             file_path = saving_dir + '/' + file_name 
             self.all_cities_listings.to_csv(file_path)
-            print(f"all cities listings saved to path: {file_path}")
+            logging.info(f"all cities listings saved to path: {file_path}")
 
-    def _read_preprocessed_listings(self, file_name):
+    def _read_preprocessed_listings(self, file_name: str) -> pd.DataFrame:
         
         cities_subdirectories = [d for d in os.listdir(self.preprocessed_data_dir) if os.path.isdir(os.path.join(self.preprocessed_data_dir, d))]
 
         
-        if not set(set(self.cities_to_process)).issubset(cities_subdirectories):
+        if not set(set(self._cities_to_process)).issubset(cities_subdirectories):
             raise ValueError("not all cities in need to be processed are in given read directory")
 
         if self.process_all_cities:
-            self.cities_to_process = cities_subdirectories
-        self.cities = self.cities_to_process
+            self._cities_to_process = cities_subdirectories
+        self.cities = self._cities_to_process
         all_cities_listings = []
 
         for city in self.cities:
@@ -571,11 +577,11 @@ class InsideAirbnbDataset:
             all_cities_listings.append(city_listings)
             
         all_cities_listings = pd.concat(all_cities_listings, ignore_index=True)
-        print("reading preprocessed cities from directoy done")
+        logging.info("reading preprocessed cities from directoy done")
         return all_cities_listings
         
 
-def main():
+def main() -> None:
     data_set = InsideAirbnbDataset()
     data_set.save_all_cities_listings_to_file('ignore_all_listings.csv')
     data_set.add_nlp_embedding(nlp_col_names = ['name'])
