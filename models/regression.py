@@ -82,7 +82,7 @@ class RegressionModels:
         self.linear_model = linear_model
         self.rf_model = rf_model
        
-    def predict(self, X: pd.DataFrame , y: pd.DataFrame, save_results=False) -> Tuple:
+    def predict(self, X: pd.DataFrame , y: pd.DataFrame = None, save_results=False) -> Tuple:
         """ Predict using the trained models (for class extern usage)"""
         nan_counts = X.isna().sum()
         print("NaN counts per column:")
@@ -90,13 +90,14 @@ class RegressionModels:
         rf_pred = self.rf_model.predict(X)
         linear_pred = self.linear_model.predict(X)
         
-        results_df = pd.DataFrame({'y_test': y, 'y_pred':linear_pred})
-        results_df = pd.DataFrame({'y_test': y, 'y_pred': rf_pred})
+        
         
         if save_results == True:
-            
+            # Optionally save predictions
+            results_df = pd.DataFrame({'y_test': y, 'y_pred': rf_pred})
             results_df.to_csv(f'{self.save_path}/{self.identifier_rf}_results.csv', index=False)
         if save_results == True:
+            results_df = pd.DataFrame({'y_test': y, 'y_pred':linear_pred})
             results_df.to_csv(f'{self.save_path}/{self.identifier_linear}_results.csv', index=False)
         return rf_pred, linear_pred
 

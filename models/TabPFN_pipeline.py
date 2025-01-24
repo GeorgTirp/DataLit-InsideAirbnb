@@ -38,7 +38,7 @@ class TabPFNRegression():
         self.metrics = None
         
 
-    def model_specific_preprocess(self, data_df: pd.DataFrame, Feature_Selection: dict = None) -> Tuple:
+    def model_specific_preprocess(self, data_df: pd.DataFrame, y: pd.DataFrame = None, Feature_Selection: dict = None) -> Tuple:
         """ Preprocess the data for the TabPFN model"""
         # Ensure all features are numeric
         if Feature_Selection is None:
@@ -67,10 +67,13 @@ class TabPFNRegression():
         #X_in = X_in[Feature_Selection['features']]
         predictions = self.reg_model.predict(X_in)
 
-        # Optionally save predictions
-        if save_results:
-            results_df = pd.DataFrame({'y_pred': predictions})
-            results_df.to_csv(f'{self.save_path}/{self.identifier}_results.csv', index=False)
+        
+        
+        if save_results == True:
+            # Optionally save predictions
+            results_df = pd.DataFrame({'y_test': y, 'y_pred': predictions})
+            results_df.to_csv(f'{self.save_path}/{self.identifier_rf}_results.csv', index=False)
+        
 
         return predictions
 
