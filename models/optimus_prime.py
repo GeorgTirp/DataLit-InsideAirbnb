@@ -1,4 +1,3 @@
-#
 import math
 import warnings
 from typing import Dict, Literal
@@ -36,7 +35,7 @@ import torch.optim
 from rtdl_revisiting_models import FTTransformer # From https://github.com/yandex-research/rtdl-revisiting-models/blob/main/package/README.md
 warnings.resetwarnings()
 
-
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 
 class FT_Transfomer():
     """ Fit, evaluate, and get attributions regression models (current: Random Forest and Linear Regression)"""
@@ -51,23 +50,21 @@ class FT_Transfomer():
             feature_types: dict = None,
             optimizer: torch.optim.Optimizer = None):
         
+        logging.info("Initializing FT_Transformer")
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         # Set random seeds in all libraries.
         delu.random.seed(0)
         self.save_path = save_path
         self.identifier = identifier
         self.Feature_Selection = Feature_Selection
-        if self.hparams is None:
+        if hparams is None:
             self.hparams = FTTransformer.get_default_kwargs()
         else:
             self.hparams = hparams
         self.feature_types = feature_types
-        if optimizer is None:
-            self.optimizer = model.make_default_optimizer()
-        else:
-            self.optimizer = optimizer
+        
         self.reg_model = None
-        self.data_numpy, self.n_cont_features, self.cat_cardinalities = self.model_specific_preprocess(
+        self.X, self.y, self.data_numpy, self.n_cont_features, self.cat_cardinalities = self.model_specific_preprocess(
             data_df, 
             Feature_Selection, 
             feature_types)
@@ -78,11 +75,15 @@ class FT_Transfomer():
             cat_cardinalities=self.cat_cardinalities, 
             d_out=1, 
             **self.hparams,).to(self.device)
-        optimizer = self.optimizer
-        
+        if optimizer is None:
+            self.optimizer = self.model.make_default_optimizer()
+        else:
+            self.optimizer = optimizer
+        logging.info("FT_Transformer initialized successfully")
 
     def model_specific_preprocess(self, data_df: pd.DataFrame, Feature_Selection: dict = None, feature_types :dict = None) -> Tuple:
         """ Preprocess the data for the TabPFN model"""
+        logging.info("Starting model-specific preprocessing")
         # Ensure all features are numeric
         if Feature_Selection is None:
             Feature_Selection = self.Feature_Selection
@@ -95,14 +96,13 @@ class FT_Transfomer():
         # Remove dollar sign and convert to float
         if y.dtype == object:
             y = y.replace('[\$,]', '', regex=True).astype(float)
-        y = y.astype(np.float32)
+        y = y.astype(np.float32).to_numpy()
 
         # >>> Continuous features.
-        # Continuous features
         continuous_features = feature_types["continuous"]
         categorical = feature_types["categorical"]
         n_cont_features = len(continuous_features)
-        X_cont: np.ndarray= X[continuous_features].astype(np.float32)
+        X_cont: np.ndarray= X[continuous_features].astype(np.float32).to_numpy()
         n_cont_features = X_cont.shape[1]
         
         # Categorical features
@@ -112,13 +112,13 @@ class FT_Transfomer():
         else:
             X_cat = None
             cat_cardinalities = []
-
+        
         # >>> Split the dataset.
         all_idx = np.arange(len(y))
-        trainval_idx, test_idx = sklearn.model_selection.train_test_split(
-            all_idx, train_size=0.8
+        trainval_idx, test_idx = train_test_split(
+            all_idx, train_size=0.8, random_state=42
         )
-        train_idx, val_idx = sklearn.model_selection.train_test_split(
+        train_idx, val_idx = train_test_split(
             trainval_idx, train_size=0.8
         )
         data_numpy = {
@@ -155,18 +155,24 @@ class FT_Transfomer():
         for part in data_numpy:
             data_numpy[part]["y"] = (data_numpy[part]["y"] - Y_mean) / Y_std
 
-        
-        return data_numpy, n_cont_features, cat_cardinalities
+        logging.info("Model-specific preprocessing completed")
+        return X, y, data_numpy, n_cont_features, cat_cardinalities
     
     def train(self, batchsize, epochs) -> None:
-        pass
+        logging.info("Training started")
+        # Training logic here
+        logging.info("Training completed")
 
     def predict(self, X_in: pd.DataFrame, save_results=False) -> Dict:
         """Predict using the trained model"""
-        pass
+        logging.info("Prediction started")
+        # Prediction logic here
+        logging.info("Prediction completed")
+        return {}
 
     def evaluate(self) -> Tuple:
         """ Evaluate the models using mean squared error, r2 score and cross validation"""
+        logging.info("Evaluation started")
         X_train, X_test, y_train, y_test = self.train_split
 
         # Linear Regression
@@ -174,37 +180,33 @@ class FT_Transfomer():
         reg_mse = mean_squared_error(y_test, reg_pred)
         reg_r2 = r2_score(y_test, reg_pred)
         
+        logging.info(f"TabPFN MSE: {reg_mse}, R2: {reg_r2}")
         
-        # Cross-validation for Random Forest
-        #reg_cv_scores = cross_val_score(self.reg_model, X_train, y_train, cv=10, scoring='accuracy')
-        #reg_cv_mean_score = reg_cv_scores.mean()
-
-        
-        print(f"TabPFN MSE: {reg_mse}, R2: {reg_r2}")
-        print(f"TabPFN R^2: {reg_r2}")
-        
-    
         tabpfn_metrics = {
             'mse': reg_mse,
             'r2': reg_r2,
         }
         self.metrics = tabpfn_metrics
 
+        logging.info("Evaluation completed")
         return tabpfn_metrics
-    
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 
     def feature_importance(self, save_results=True) -> Dict:
         """Return the feature importance for the Random Forest and linear model"""
-        pass
+        logging.info("Feature importance calculation started")
+        # Feature importance logic here
+        logging.info("Feature importance calculation completed")
+        return {}
 
-    def plot():
+    def plot(self):
         """ Plot """
-        pass
+        logging.info("Plotting started")
+        # Plotting logic here
+        logging.info("Plotting completed")
 
 if __name__ == "__main__":
-    #folder_path = "/Users/georgtirpitz/Documents/Data_Literacy"
-    folder_path = "/home/georg/Documents/Master/Data_Literacy"
+    logging.info("Script started")
+    folder_path = "/Users/georgtirpitz/Documents/Data_Literacy"
     data_df = pd.read_csv(folder_path + "/city_listings.csv")
     safe_path = folder_path + "/results" + "test"
     identifier = "tabpfn"
@@ -253,12 +255,14 @@ if __name__ == "__main__":
     
     model = FT_Transfomer(
         data_df, 
-        Feature_Selection, 
-        test_split_size, 
-        safe_path, 
+        Feature_Selection,
+        test_split_size,
+        safe_path,
         identifier,
         hparams,
         feature_types,
         optimizer)
     model.model_specific_preprocess(data_df, Feature_Selection)
+    
+    logging.info("Script finished")
     
