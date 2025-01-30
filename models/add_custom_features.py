@@ -69,7 +69,7 @@ class AddCustomFeatures:
         pandarallel.initialize(progress_bar=True)
         self.data['average_review_length'] = self.data['comments'].parallel_apply(calculate_review_length)
 
-        def calculate_spelling_errors(self, description):
+    def calculate_spelling_errors(self, description):
         
         #ignore list - current method to ignore ordinal numbers (from 1st to 1000th)
         ignore = [f"{i}{'st' if i % 10 == 1 and i % 100 != 11 else 'nd' if i % 10 == 2 and i % 100 != 12 else 'rd' if i % 10 == 3 and i % 100 != 13 else 'th'}" for i in range(1, 1001)]
