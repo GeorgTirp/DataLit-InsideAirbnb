@@ -1,0 +1,15 @@
+2025-01-21 14:00:37,053 - INFO - Starting the XGBoost pipeline...
+2025-01-21 14:00:37,053 - INFO - ----------------------------------
+2025-01-21 14:00:37,053 - INFO - Parameters:
+2025-01-21 14:00:37,053 - INFO - Data: /home/frieder/pCloudDrive/AirBnB_Daten/Preprocessed_data/japan_preprocessed/tokyo/city_listings.csv
+2025-01-21 14:00:37,053 - INFO - Target: price
+2025-01-21 14:00:37,053 - INFO - Features: ['accommodates', 'bathrooms', 'bedrooms', 'beds', 'review_scores_value']
+2025-01-21 14:00:37,053 - INFO - Outlier removal: False
+2025-01-21 14:00:37,053 - INFO - CV: 5
+2025-01-21 14:00:37,053 - INFO - Correlation threshold: 0.9
+2025-01-21 14:00:37,053 - INFO - Save results: True
+2025-01-21 14:00:37,053 - INFO - Additional custom features: ['distance_to_city_center', 'average_review_length']
+2025-01-21 14:00:37,053 - INFO - Save path: results//Tokyo_prediction
+2025-01-21 14:00:37,053 - INFO - Identifier: Tokyo_prediction
+2025-01-21 14:00:37,053 - INFO - Random state: 42
+2025-01-21 14:00:37,053 - INFO - ----------------------------------

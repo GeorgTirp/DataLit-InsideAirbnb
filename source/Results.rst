@@ -1,6 +1,10 @@
 Results
 =======
 
+XGBoost Regressor Linearregression
+----------------------------------
+
+
 XGBoost Regressor Munich_prediction
 -----------------------------------
 
@@ -29,6 +33,30 @@ The parameters of the model:
    :alt: Shap Aggregated Bar
 
    The absolute SHAP values of the model. The feature importances can be read from this plot.
+
+
+XGBoost Regressor Tokyo_prediction
+----------------------------------
+
+
+The parameters of the model:
+
+
+.. literalinclude:: ../results/Tokyo_prediction/Tokyo_prediction_pipeline.log
+   :caption: Log
+   :lines: 1-15
+
+
+XGBoost Regressor Zurich_prediction
+-----------------------------------
+
+
+The parameters of the model:
+
+
+.. literalinclude:: ../results/Zurich_prediction/Zurich_prediction_pipeline.log
+   :caption: Log
+   :lines: 1-15
 
 
 XGBoost Regressor Test_run

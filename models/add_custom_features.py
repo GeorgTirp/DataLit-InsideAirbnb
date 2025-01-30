@@ -47,6 +47,7 @@ class AddCustomFeatures:
     def add_review_sentiment(self):
         pandarallel.initialize(progress_bar=True)
         self.data['sentiment_score'] = self.data['comments'].parallel_apply(self.analyze_sentiment)
+        # Positive / positive + negative
 
 
     # Function to compute sentiment for a list of reviews (compound score)
