@@ -13,9 +13,9 @@ Visualisation of results
 ## To push results to the website:
 1. Use naming convention in Munich_Results
 2. Go to DATALIT-INSIDEAIRBNB
-3. <make html>
-4. <ghp-import -n -p build/html>
-5. [Website at: Inside_Air_BnB](https://georgtirp.github.io/DataLit-InsideAirbnb/Results.html#xgboost-regressor-linearregression)
+3. `make html`
+4. `ghp-import -n -p build/html`
+5. Website at: [Inside_Air_BnB](https://georgtirp.github.io/DataLit-InsideAirbnb/Results.html#xgboost-regressor-linearregression)
 
 
 $\textbf{Forschungsfrage:}$
