@@ -4,6 +4,10 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from pandarallel import pandarallel
 import folium
 
+#packages for calculating spelling errors
+import spacy
+from textblob import TextBlob 
+from bs4 import BeautifulSoup  
 
 ##### This is a script to add additional custom features to the AirBnB data #####
 
@@ -64,6 +68,41 @@ class AddCustomFeatures:
             return np.mean(lengths)
         pandarallel.initialize(progress_bar=True)
         self.data['average_review_length'] = self.data['comments'].parallel_apply(calculate_review_length)
+
+        def calculate_spelling_errors(self, description):
+        
+        #ignore list - current method to ignore ordinal numbers (from 1st to 1000th)
+        ignore = [f"{i}{'st' if i % 10 == 1 and i % 100 != 11 else 'nd' if i % 10 == 2 and i % 100 != 12 else 'rd' if i % 10 == 3 and i % 100 != 13 else 'th'}" for i in range(1, 1001)]
+
+        if pd.isna(description) or description == "": #check if description is empty (NaN values are already preprocessed but just in case)
+                return 0
+        
+        # remove html tags from description
+        clean_description = BeautifulSoup(description, "html.parser").get_text()
+        
+        nlp_description = self.nlp(clean_description)
+        spelling_errors = 0
+
+        # check description word for word 
+        for token in nlp_description: 
+
+            # makes sure to not flag GPE = geopolitical entity, LOC = location as spelling errors
+            word = token.text
+            if token.ent_type_ in ["GPE", "LOC"] or word in ignore: 
+                continue
+            
+            # check for possible spelling errors
+            corrected = TextBlob(word).correct() 
+            if word.lower() != corrected.lower(): 
+                spelling_errors += 1
+            
+        return spelling_errors / len(TextBlob(clean_description).words) #return ratio of spelling errors to total words
+        
+
+    def add_spelling_evaluation(self):
+        pandarallel.initialize(progress_bar=True)
+        self.data['spelling_errors'] = self.data['description'].parallel_apply(lambda x: self.calculate_spelling_errors(x))
+
 
     # Returns the data
     def return_data(self):
