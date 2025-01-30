@@ -27,6 +27,10 @@ class AddCustomFeatures:
         if 'average_review_length' in additional_features:
             self.add_review_length()
 
+        if 'spelling_errors' in additional_features:
+            self.nlp = spacy.load("en_core_web_sm")
+            self.add_spelling_evaluation()
+
 
     # Calculates the distance from the middle of all the listing (e.g. city center) for each listing as measure of inverse centrality
     def calculate_centrality(self):
@@ -75,7 +79,7 @@ class AddCustomFeatures:
         ignore = [f"{i}{'st' if i % 10 == 1 and i % 100 != 11 else 'nd' if i % 10 == 2 and i % 100 != 12 else 'rd' if i % 10 == 3 and i % 100 != 13 else 'th'}" for i in range(1, 1001)]
 
         if pd.isna(description) or description == "": #check if description is empty (NaN values are already preprocessed but just in case)
-                return 0
+                return np.nan
         
         # remove html tags from description
         clean_description = BeautifulSoup(description, "html.parser").get_text()
