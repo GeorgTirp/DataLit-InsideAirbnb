@@ -17,7 +17,6 @@ from bs4 import BeautifulSoup
 
 #packages for calculating aesthetic scores
 import requests
-from PIL import Image
 from io import BytesIO
 import tensorflow as tf
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
@@ -26,8 +25,6 @@ from tensorflow.keras.applications import MobileNet
 from tensorflow.keras.models import Model
 from tensorflow.keras.preprocessing import image  # Needed for image loading and preprocessing
 
-import os
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # 0 = all messages, 1 = warnings, 2 = errors only, 3 = silent
 
 
 print(tf.__version__)
@@ -60,14 +57,12 @@ class AddCustomFeatures:
             self.nlp = spacy.load("en_core_web_sm")
             self.add_spelling_evaluation()
         
-<<<<<<< Updated upstream
         if 'host_profile_analysis' in additional_features:
             self.add_host_profile_analysis()
-=======
+        
         if 'aesthetic_score' in additional_features:
             self.load_pretrained_nima()
             self.add_aesthetic_score()
->>>>>>> Stashed changes
 
 
     # Calculates the distance from the middle of all the listing (e.g. city center) for each listing as measure of inverse centrality
@@ -144,7 +139,6 @@ class AddCustomFeatures:
     def add_spelling_evaluation(self):
         pandarallel.initialize(progress_bar=True)
         self.data['spelling_errors'] = self.data['description'].parallel_apply(lambda x: self.calculate_spelling_errors(x))
-<<<<<<< Updated upstream
     
     def add_host_profile_analysis(self):
 
@@ -253,14 +247,99 @@ class AddCustomFeatures:
             
 
 
+   # method to load a NIMA model to predict aesthetic scores
+    def load_pretrained_nima(self):
+        base_model = MobileNet(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
+        #print("MobileNetV2 model loaded successfully!")
 
+        x = GlobalAveragePooling2D()(base_model.output)
+        # hidden layer
+        x = Dense(1024, activation='relu')(x)
+        predictions = Dense(10, activation='softmax')(x)
 
+        self.aesthetic_model = Model(inputs=base_model.input, outputs=predictions)
+        # load pretrained NIMA weights (MobilnetV2)
+        weight_path = "./mobilenet_weights.h5"  
+        print(f"Loading weights from: {weight_path}")
+        try:
+            self.aesthetic_model.load_weights(weight_path, by_name=True, skip_mismatch=True)
+            print("Pre-trained NIMA weights loaded successfully!")
+        except Exception as e:
+            print(f"Error loading weights: {e}. Check if the path is correct.")
+        
+        self.aesthetic_model.compile(optimizer='adam', loss='categorical_crossentropy')
+        self.aesthetic_model.trainable = False
 
+    # method to predict aesthetic score of an image using the NIMA model
+    def predict_aesthetic_score(self, img_url):
+        try:
+            response = requests.get(img_url, timeout=5)
+            response.raise_for_status()
+
+            img = Image.open(BytesIO(response.content)).resize((224, 224), Image.LANCZOS)
+            img = img.convert('RGB')
+
+            img_array = tf.keras.preprocessing.image.img_to_array(img)
+            img_array = np.expand_dims(img_array, axis=0)
+            img_array_preprocessed = preprocess_input(img_array)
+
+            # model predictions
+            predictions = self.aesthetic_model.predict(img_array_preprocessed)[0]
+
+            # compute aesthetic score
+            aesthetic_score = np.sum(predictions * np.arange(1, 11))
+            variance = np.sum(predictions * (np.arange(1, 11) - aesthetic_score)**2)
+            standard_deviation = np.sqrt(variance)
+            print(f"Aesthetic score: {aesthetic_score}")
+            print(f"Standard deviation: {standard_deviation}")
+            
+
+            return max(1.0, min(10.0, aesthetic_score))
+
+        
+        except Exception as e:
+            print(f"Error processing image: {e}")
+            return np.nan
+    
+    def add_aesthetic_score(self):
+        pandarallel.initialize(progress_bar=True)
+        self.data['aesthetic_score'] = self.data['picture_url'].apply(lambda x: self.predict_aesthetic_score(x))
 
 
     # Returns the data
     def return_data(self):
         return self.data
-=======
->>>>>>> Stashed changes
     
+# Test the AddCustomFeatures class
+# Create a small DataFrame with the test image URL
+data = pd.DataFrame({
+    'picture_url': ['https://a0.muscache.com/pictures/miso/Hosting-57049/original/2ef88085-751b-47e0-9be4-8adfd8a24716.jpeg', 
+                    'https://a0.muscache.com/pictures/176e2964-5ead-4d6d-a080-5a5041ff44f1.jpg',
+                    'https://a0.muscache.com/pictures/cbe4213a-f327-4de7-b50b-f056cbb8228e.jpg',
+                    'https://images.pexels.com/photos/189349/pexels-photo-189349.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+                    'https://a0.muscache.com/pictures/19341714/7d7e006a_original.jpg',
+                    'https://a0.muscache.com/pictures/49861518/4dc13f36_original.jpg']
+})
+
+
+# Initialize the AddCustomFeatures class
+additional_features = ['aesthetic_score']
+custom_features = AddCustomFeatures(data, additional_features)
+
+# Calculate the aesthetic score
+processed_data = custom_features.return_data()
+
+# Print the result
+print(processed_data[['picture_url', 'aesthetic_score']])
+
+# Debugging: Check if the image URL is accessible
+try:
+    import requests
+    from PIL import Image
+    from io import BytesIO
+
+    response = requests.get(data['picture_url'][0])
+    img = Image.open(BytesIO(response.content))
+    #print("Image downloaded successfully!")
+except Exception as e:
+    print(f"Error downloading image: {e}")
