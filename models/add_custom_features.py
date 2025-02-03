@@ -15,6 +15,24 @@ import spacy
 from textblob import TextBlob 
 from bs4 import BeautifulSoup  
 
+#packages for calculating aesthetic scores
+import requests
+from PIL import Image
+from io import BytesIO
+import tensorflow as tf
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+from tensorflow.keras.applications import MobileNet
+from tensorflow.keras.models import Model
+from tensorflow.keras.preprocessing import image  # Needed for image loading and preprocessing
+
+import os
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # 0 = all messages, 1 = warnings, 2 = errors only, 3 = silent
+
+
+print(tf.__version__)
+
+
 ##### This is a script to add additional custom features to the AirBnB data #####
 
 
@@ -42,8 +60,14 @@ class AddCustomFeatures:
             self.nlp = spacy.load("en_core_web_sm")
             self.add_spelling_evaluation()
         
+<<<<<<< Updated upstream
         if 'host_profile_analysis' in additional_features:
             self.add_host_profile_analysis()
+=======
+        if 'aesthetic_score' in additional_features:
+            self.load_pretrained_nima()
+            self.add_aesthetic_score()
+>>>>>>> Stashed changes
 
 
     # Calculates the distance from the middle of all the listing (e.g. city center) for each listing as measure of inverse centrality
@@ -120,6 +144,7 @@ class AddCustomFeatures:
     def add_spelling_evaluation(self):
         pandarallel.initialize(progress_bar=True)
         self.data['spelling_errors'] = self.data['description'].parallel_apply(lambda x: self.calculate_spelling_errors(x))
+<<<<<<< Updated upstream
     
     def add_host_profile_analysis(self):
 
@@ -236,5 +261,6 @@ class AddCustomFeatures:
     # Returns the data
     def return_data(self):
         return self.data
+=======
+>>>>>>> Stashed changes
     
-
