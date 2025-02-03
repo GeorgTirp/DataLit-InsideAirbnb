@@ -310,36 +310,3 @@ class AddCustomFeatures:
     def return_data(self):
         return self.data
     
-# Test the AddCustomFeatures class
-# Create a small DataFrame with the test image URL
-data = pd.DataFrame({
-    'picture_url': ['https://a0.muscache.com/pictures/miso/Hosting-57049/original/2ef88085-751b-47e0-9be4-8adfd8a24716.jpeg', 
-                    'https://a0.muscache.com/pictures/176e2964-5ead-4d6d-a080-5a5041ff44f1.jpg',
-                    'https://a0.muscache.com/pictures/cbe4213a-f327-4de7-b50b-f056cbb8228e.jpg',
-                    'https://images.pexels.com/photos/189349/pexels-photo-189349.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-                    'https://a0.muscache.com/pictures/19341714/7d7e006a_original.jpg',
-                    'https://a0.muscache.com/pictures/49861518/4dc13f36_original.jpg']
-})
-
-
-# Initialize the AddCustomFeatures class
-additional_features = ['aesthetic_score']
-custom_features = AddCustomFeatures(data, additional_features)
-
-# Calculate the aesthetic score
-processed_data = custom_features.return_data()
-
-# Print the result
-print(processed_data[['picture_url', 'aesthetic_score']])
-
-# Debugging: Check if the image URL is accessible
-try:
-    import requests
-    from PIL import Image
-    from io import BytesIO
-
-    response = requests.get(data['picture_url'][0])
-    img = Image.open(BytesIO(response.content))
-    #print("Image downloaded successfully!")
-except Exception as e:
-    print(f"Error downloading image: {e}")
