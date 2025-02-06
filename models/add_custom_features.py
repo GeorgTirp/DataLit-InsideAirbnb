@@ -23,10 +23,12 @@ class AddCustomFeatures:
             self, 
             data: pd.DataFrame, 
             additional_features: list, 
-            host_profile_picture_dir: str = "C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy"):
+            host_profile_picture_dir: str = "C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy",
+            picture_url_dir: str = "C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy"):
         self.data = data
         self.features = []
         self.host_profile_picture_dir = host_profile_picture_dir
+        self.picture_url_dir = picture_url_dir
 
         # Add centrality feature:
         if 'distance_to_city_center' in additional_features:
@@ -44,6 +46,9 @@ class AddCustomFeatures:
         
         if 'host_profile_analysis' in additional_features:
             self.add_host_profile_analysis()
+
+        if 'listing_picture_analysis' in additional_features:
+            self.add_listing_picture_analysis()
 
 
     # Calculates the distance from the middle of all the listing (e.g. city center) for each listing as measure of inverse centrality
@@ -131,33 +136,6 @@ class AddCustomFeatures:
         print(host_picture_url_dir)
         assert len(os.listdir(host_picture_url_dir)) == n, "number of pictures in host profile picture directory must match number of listings (len of df)"
 
-        """host_age_column = []
-        host_gender_column = []
-        host_emotion_column = []
-        nan_count = 0
-        for i in tqdm(range(n)):
-            image_path = host_picture_url_dir + f"/image_{i}.jpg"
-            
-            objs = DeepFace.analyze(
-                img_path = image_path, 
-                actions = ['age', 'gender', 'emotion'],
-                enforce_detection = False
-            )
-            objs = objs[0]
-            if objs['face_confidence'] > 0:
-                host_age_column.append(objs['age'])
-                host_gender_column.append(objs['gender'])
-                host_emotion_column.append(objs['dominant_emotion'])
-            else:
-                nan_count += 1
-                print(f"running nan: {nan_count/(i+1): .3f}")
-                host_age_column.append(np.nan)
-                host_gender_column.append(np.nan)
-                host_emotion_column.append(np.nan)
-        
-        self.data['host_profile_pic_age'] = host_age_column
-        self.data['host_profile_pic_gender'] = host_gender_column
-        self.data['host_profile_pic_emotion'] = host_emotion_column"""
 
         device = "cuda" if torch.cuda.is_available() else "cpu"
         model, preprocess = clip.load("ViT-B/32", device=device)
@@ -181,9 +159,6 @@ class AddCustomFeatures:
         professionality_features = model.encode_text(professionality)
         quality_features = model.encode_text(quality)
 
-         
-
-
         for i in tqdm(range(n)):
             image_path = host_picture_url_dir + f"/image_{i}.jpg"
             image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
@@ -202,16 +177,6 @@ class AddCustomFeatures:
             professionality_score = professionality_similarity[0][0].item()
             quality_score = quality_similarity[0][0].item()
 
-            print(f"image_{i}.jpg")
-            print(f"people_visible_score: {people_visible_score}")
-            print(f"male or female score: {male_or_female_score}")
-            print(f"setting_indoor_outdoor_score: {setting_indoor_outdoor_score}")
-            print(f"professionality_score: {professionality_score}")
-            print(f"quality_score: {quality_score}")
-            if i>15:
-                break
-
-
             people_visible_column.append(people_visible_score)
             male_or_female_column.append(male_or_female_score)
             setting_indoor_outdoor_column.append(setting_indoor_outdoor_score)
@@ -225,8 +190,37 @@ class AddCustomFeatures:
         self.data['host_profile_pic_professionality'] = professionality_column
         self.data['host_profile_pic_quality'] = quality_column
         
-            
+    def add_listing_picture_analysis(self):
 
+        assert len(self.data["city"].unique()) == 1, "only single city dataframes can be processed here"
+
+        city = self.data["city"].iloc[0]
+        n = len(self.data)
+        picture_url_dir = self.picture_url_dir + f"/{city}/" + "picture_url"
+        print(picture_url_dir)
+        assert len(os.listdir(picture_url_dir)) == n, "number of pictures in host profile picture directory must match number of listings (len of df)"
+
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        model, preprocess = clip.load("ViT-B/32", device=device)
+        text = clip.tokenize(["professional photo", "casual photo", "blurry image"]).to(device)
+
+        
+        setting_indoor_outdoor_column = []
+        setting_indoor_outdoor = clip.tokenize(["indoor", "outdoor"]).to(device)
+        setting_indoor_outdoor_features = model.encode_text(setting_indoor_outdoor)
+
+        for i in tqdm(range(n)):
+            image_path = picture_url_dir + f"/image_{i}.jpg"
+            image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
+            with torch.no_grad():
+                image_features = model.encode_image(image)
+                
+                setting_indoor_outdoor_similarity = (image_features @ setting_indoor_outdoor_features.T).softmax(dim=-1)
+                
+            setting_indoor_outdoor_score = setting_indoor_outdoor_similarity[0][0].item()
+            setting_indoor_outdoor_column.append(setting_indoor_outdoor_score)
+            
+        self.data['picture_url_setting_indoor_outdoor'] = setting_indoor_outdoor_column
 
 
 
