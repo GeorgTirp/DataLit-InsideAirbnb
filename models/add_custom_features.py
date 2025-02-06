@@ -38,10 +38,12 @@ class AddCustomFeatures:
             self, 
             data: pd.DataFrame, 
             additional_features: list, 
-            host_profile_picture_dir: str = "C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy"):
+            host_profile_picture_dir: str = "C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy",
+            listing_picture_dir: str = "/Users/mathis.nommensen/DL_InsideAirbnb"):
         self.data = data
         self.features = []
         self.host_profile_picture_dir = host_profile_picture_dir
+        self.listing_picture_dir = listing_picture_dir
 
         # Add centrality feature:
         if 'distance_to_city_center' in additional_features:
@@ -259,7 +261,8 @@ class AddCustomFeatures:
 
         self.aesthetic_model = Model(inputs=base_model.input, outputs=predictions)
         # load pretrained NIMA weights (MobilnetV2)
-        weight_path = "./mobilenet_weights.h5"  
+        weight_path = "./mobilenet_weights.h5" 
+
         print(f"Loading weights from: {weight_path}")
         try:
             self.aesthetic_model.load_weights(weight_path, by_name=True, skip_mismatch=True)
@@ -271,14 +274,22 @@ class AddCustomFeatures:
         self.aesthetic_model.trainable = False
 
     # method to predict aesthetic score of an image using the NIMA model
-    def predict_aesthetic_score(self, img_url):
-        try:
-            response = requests.get(img_url, timeout=5)
-            response.raise_for_status()
+    def add_aesthetic_score(self):
+        assert len(self.data["city"].unique()) == 1, "only single city dataframes can be processed here"
 
-            img = Image.open(BytesIO(response.content)).resize((224, 224), Image.LANCZOS)
+        city = self.data["city"].iloc[0]
+        n = len(self.data)
+        listing_picture_url_dir = self.listing_picture_dir + f"/{city}/" + "picture_url"
+        print(f"Loading listing pictures from: {listing_picture_url_dir}")
+        assert len(os.listdir(listing_picture_url_dir)) == n, "number of pictures in listing picture directory must match number of listings (len of df)"
+
+        aesthetic_scores = []
+        for i in tqdm(range(n)):
+
+            # load listing picture from directory + preprocessing
+            image_path = listing_picture_url_dir +  f"/image_{i}.jpg"
+            img = Image.open(image_path).resize((224, 224), Image.LANCZOS)
             img = img.convert('RGB')
-
             img_array = tf.keras.preprocessing.image.img_to_array(img)
             img_array = np.expand_dims(img_array, axis=0)
             img_array_preprocessed = preprocess_input(img_array)
@@ -286,24 +297,15 @@ class AddCustomFeatures:
             # model predictions
             predictions = self.aesthetic_model.predict(img_array_preprocessed)[0]
 
-            # compute aesthetic score
+            # compute aesthetic score and standard deviation
             aesthetic_score = np.sum(predictions * np.arange(1, 11))
             variance = np.sum(predictions * (np.arange(1, 11) - aesthetic_score)**2)
             standard_deviation = np.sqrt(variance)
-            print(f"Aesthetic score: {aesthetic_score}")
-            print(f"Standard deviation: {standard_deviation}")
+            print(f"Listing {i} → Aesthetic Score: {aesthetic_score:.2f} ± {standard_deviation:.2f}")
             
-
-            return max(1.0, min(10.0, aesthetic_score))
-
-        
-        except Exception as e:
-            print(f"Error processing image: {e}")
-            return np.nan
-    
-    def add_aesthetic_score(self):
-        pandarallel.initialize(progress_bar=True)
-        self.data['aesthetic_score'] = self.data['picture_url'].apply(lambda x: self.predict_aesthetic_score(x))
+            aesthetic_scores.append(max(1.0, min(10.0, aesthetic_score)))
+            
+        self.data['aesthetic_score'] = aesthetic_scores    
 
 
     # Returns the data
