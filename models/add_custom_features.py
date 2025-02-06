@@ -53,7 +53,7 @@ class AddCustomFeatures:
 
     # Add a sentiment score to the reviews - parallelized to utilize all cores (still takes about 1h for 10k reviews)
     def add_review_sentiment(self):
-        pandarallel.initialize(progress_bar=True)
+        pandarallel.initialize(progress_bar=True, nb_workers=10)
         self.data['sentiment_score'] = self.data['comments'].parallel_apply(self.analyze_sentiment)
         # Positive / positive + negative
 
@@ -61,7 +61,10 @@ class AddCustomFeatures:
     # Function to compute sentiment for a list of reviews (compound score)
     def analyze_sentiment(self, text):
         analyzer = SentimentIntensityAnalyzer()
-        return analyzer.polarity_scores(text)['compound']
+        if not text:  # Handle empty list case
+            return 0.0  
+        scores = [analyzer.polarity_scores(text)['compound'] for text in text]
+        return sum(scores) / len(scores)  # Calculate average
     
     
     def add_review_length(self):
@@ -113,3 +116,10 @@ class AddCustomFeatures:
         return self.data
     
 
+
+
+data = pd.read_csv('/home/frieder/pCloudDrive/AirBnB_Daten/Preprocessed_data/germany_preprocessed/berlin/city_listings.csv')
+add_custom_features = ['distance_to_city_center', 'review_sentiment', 'average_review_length', 'spelling_errors']
+features = AddCustomFeatures(data, add_custom_features)
+data = features.return_data()
+data.to_csv('/home/frieder/pCloudDrive/AirBnB_Daten/Preprocessed_data/germany_preprocessed/berlin/city_listings_custom_features.csv', index=False)
