@@ -33,6 +33,7 @@ import torch.nn.functional as F
 import torch.optim
 import gc
 import os
+from scipy.stats import pearsonr
 from rtdl_revisiting_models import FTTransformer # From https://github.com/yandex-research/rtdl-revisiting-models/blob/main/package/README.md
 warnings.resetwarnings()
 warnings.simplefilter("ignore", ResourceWarning)
@@ -180,7 +181,6 @@ class FT_Transfomer():
 
         # Clear memory
         del X
-        del data_df
         del data_numpy
         del X_cat
         del X_cont
@@ -300,50 +300,68 @@ class FT_Transfomer():
             results_df.to_csv(f'{self.save_path}/{self.identifier}_results.csv', index=False)
 
         if evaluate == True:
-            ft_mse = mean_squared_error(y_test, test_predictions)
-            ft_r2 = r2_score(y_test, test_predictions)
-        
-            logging.info(f"TabPFN MSE: {ft_mse}, R2: {ft_r2}")
-        
-            ft_metrics = {
-               'mse': ft_mse,
-                'r2': ft_r2,
+            
+            mse = mean_squared_error(y_test, test_predictions)
+            r2, p_price = pearsonr(y_test, test_predictions)
+
+            logging.info(f"{self.identifier} MSE: {mse}, R2: {r2}")
+            logging.info(f"{self.identifier} P_value: {p_price}")
+
+            metrics = {
+                'mse': mse,
+                'r2': r2,
+                'p_value': p_price
             }
-            self.metrics = ft_metrics
+            self.metrics = metrics
 
         logging.info("Evaluation completed")
         logging.info("Prediction completed")
         return predictions
 
-        
-
-    def evaluate(self) -> Tuple:
-        """ Evaluate the models using mean squared error, r2 score and cross validation"""
-        logging.info("Evaluation started")
-        X_train, X_test, y_train, y_test = self.train_split
-
-        # Linear Regression
-        ft_pred = self.model.predict(X_test)
-        ft_mse = mean_squared_error(y_test, ft_pred)
-        ft_r2 = r2_score(y_test, ft_pred)
-        
-        logging.info(f"FT-Transformer MSE: {ft_mse}, R2: {ft_r2}")
-        
-        ft_metrics = {
-            'mse': ft_mse.item(),
-            'r2': ft_r2.item(),
-        }
-        self.metrics = ft_metrics
-
-        logging.info("Evaluation completed")
-        return ft_metrics
 
     def feature_importance(self, save_results=True) -> Dict:
         """Return the feature importance for the Random Forest and linear model"""
-        logging.info("Feature importance calculation started")
-        # Feature importance logic here
-        logging.info("Feature importance calculation completed")
-        return {}
+        logging.info("Starting SHAP importance evaluation...")
+        shap.initjs()
+        # Extract the feature matrix from the preprocessed data
+        X_cont = self.data["train"]["x_cont"].cpu().numpy()
+        X_cat = self.data["train"]["x_cat"].cpu().numpy() if "x_cat" in self.data["train"] else None
+
+        # Combine continuous and categorical features
+        if X_cat is not None:
+            X = np.concatenate([X_cont, X_cat], axis=1)
+        else:
+            X = X_cont
+
+        # Convert to a DataFrame for better handling with SHAP
+        feature_names = self.Feature_Selection['features']
+        X_df = pd.DataFrame(X, columns=feature_names)
+
+        # Sample background data for SHAP
+        background_data = torch.from_numpy(X.sample(50, random_state=42).values).to(self.device)
+        
+        shap_values = []
+        explainer = shap.DeepExplainer(self.model, background_data)
+        for row in tqdm(X.itertuples(index=False), total=len(X_df), desc="Computing SHAP values"):
+            row_shap = explainer.shap_values(pd.DataFrame([row], columns=X_df.columns))
+            shap_values.append(row_shap)
+            # Convert list of arrays to a single array
+        shap_values = np.array(shap_values).squeeze()
+
+        # Plot aggregated SHAP values (Feature impact)
+        shap.summary_plot(shap_values, features=X_df, feature_names=X_df, show=False, max_display=40)
+        plt.title(f'{self.identifier} SHAP Summary Plot (Aggregated)', fontsize=16)
+        if save_results:
+            plt.subplots_adjust(top=0.90)
+            plt.savefig(f'{self.save_path}/{self.identifier}_shap_aggregated_beeswarm.png')
+            plt.close()
+            shap.summary_plot(shap_values, X_df, plot_type="bar", show=False)
+            plt.savefig(f'{self.save_path}/{self.identifier}_shap_aggregated_bar.png')
+            plt.close()
+        
+        logging.info("Finished feature importance evaluation.")
+        return shap_values
+        
 
     def plot(self):
         pass
@@ -352,9 +370,11 @@ if __name__ == "__main__":
     logging.info("Script started")
     #folder_path = "/Users/georgtirpitz/Documents/Data_Literacy"
     folder_path = "/home/georg/Documents/Master/Data_Literacy"
+    identifier = "test_FT_Transformer"
+    safe_path = folder_path + "/DataLit-InsideAirbnb" + "/results/" + identifier + "/"
     with open(folder_path + "/city_listings.csv", 'r') as file:
         data_df = pd.read_csv(file)
-    safe_path = folder_path + "DataLit-InsideAirbnb" + "/results" + "/ft_test"
+    
     if not os.path.exists(safe_path):
         os.makedirs(safe_path)
     identifier = "ft_transformer"
@@ -430,8 +450,9 @@ if __name__ == "__main__":
         amsgrad=False
     )
     model.model_specific_preprocess(data_df, Feature_Selection)
-    model.train(batch_size=256, patience=200, n_epochs=3, optimizer=optimizer)
+    model.train(batch_size=256, patience=200, n_epochs=100, optimizer=optimizer)
     model.predict(data_df, save_results=True, evaluate=True)
+    model.feature_importance()
     logging.info(f"Metrics: {model.metrics}")
     #model.save_model(safe_path)
-    logging.info("Script finished")
+    logging.info("Script finished").squeeze()

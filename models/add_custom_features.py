@@ -3,19 +3,45 @@ import pandas as pd
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from pandarallel import pandarallel
 import folium
+import os
+#from deepface import DeepFace
+from tqdm import tqdm
+import clip
+from PIL import Image
+import torch
 
 #packages for calculating spelling errors
 import spacy
 from textblob import TextBlob 
 from bs4 import BeautifulSoup  
 
+#packages for calculating aesthetic scores
+import requests
+from io import BytesIO
+import tensorflow as tf
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+from tensorflow.keras.applications import MobileNet
+from tensorflow.keras.models import Model
+from tensorflow.keras.preprocessing import image  # Needed for image loading and preprocessing
+
+
+
+print(tf.__version__)
+
+
 ##### This is a script to add additional custom features to the AirBnB data #####
 
 
 class AddCustomFeatures:
-    def __init__(self, data, additional_features: list):
+    def __init__(
+            self, 
+            data: pd.DataFrame, 
+            additional_features: list, 
+            host_profile_picture_dir: str = "C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy"):
         self.data = data
         self.features = []
+        self.host_profile_picture_dir = host_profile_picture_dir
 
         # Add centrality feature:
         if 'distance_to_city_center' in additional_features:
@@ -30,6 +56,13 @@ class AddCustomFeatures:
         if 'spelling_errors' in additional_features:
             self.nlp = spacy.load("en_core_web_sm")
             self.add_spelling_evaluation()
+        
+        if 'host_profile_analysis' in additional_features:
+            self.add_host_profile_analysis()
+        
+        if 'aesthetic_score' in additional_features:
+            self.load_pretrained_nima()
+            self.add_aesthetic_score()
 
 
     # Calculates the distance from the middle of all the listing (e.g. city center) for each listing as measure of inverse centrality
@@ -109,17 +142,207 @@ class AddCustomFeatures:
     def add_spelling_evaluation(self):
         pandarallel.initialize(progress_bar=True)
         self.data['spelling_errors'] = self.data['description'].parallel_apply(lambda x: self.calculate_spelling_errors(x))
+    
+    def add_host_profile_analysis(self):
+
+        assert len(self.data["city"].unique()) == 1, "only single city dataframes can be processed here"
+
+        city = self.data["city"].iloc[0]
+        n = len(self.data)
+        host_picture_url_dir = self.host_profile_picture_dir + f"/{city}/" + "host_picture_url"
+        print(host_picture_url_dir)
+        assert len(os.listdir(host_picture_url_dir)) == n, "number of pictures in host profile picture directory must match number of listings (len of df)"
+
+        """host_age_column = []
+        host_gender_column = []
+        host_emotion_column = []
+        nan_count = 0
+        for i in tqdm(range(n)):
+            image_path = host_picture_url_dir + f"/image_{i}.jpg"
+            
+            objs = DeepFace.analyze(
+                img_path = image_path, 
+                actions = ['age', 'gender', 'emotion'],
+                enforce_detection = False
+            )
+            objs = objs[0]
+            if objs['face_confidence'] > 0:
+                host_age_column.append(objs['age'])
+                host_gender_column.append(objs['gender'])
+                host_emotion_column.append(objs['dominant_emotion'])
+            else:
+                nan_count += 1
+                print(f"running nan: {nan_count/(i+1): .3f}")
+                host_age_column.append(np.nan)
+                host_gender_column.append(np.nan)
+                host_emotion_column.append(np.nan)
+        
+        self.data['host_profile_pic_age'] = host_age_column
+        self.data['host_profile_pic_gender'] = host_gender_column
+        self.data['host_profile_pic_emotion'] = host_emotion_column"""
+
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        model, preprocess = clip.load("ViT-B/32", device=device)
+        text = clip.tokenize(["professional photo", "casual photo", "blurry image"]).to(device)
+
+        people_visible_column = []
+        male_or_female_column = []
+        setting_indoor_outdoor_column = []
+        professionality_column = []
+        quality_column = []
+
+        people_visible = clip.tokenize(["person", "no person"]).to(device)
+        male_or_female = clip.tokenize(["male", "female"]).to(device)
+        setting_indoor_outdoor = clip.tokenize(["indoor", "outdoor"]).to(device)
+        professionality = clip.tokenize(["professional photo", "casual photo"]).to(device)
+        quality = clip.tokenize(["high quality photo", "low quality or blurry photo"]).to(device)
+
+        people_visible_features = model.encode_text(people_visible)
+        male_or_female_features = model.encode_text(male_or_female)
+        setting_indoor_outdoor_features = model.encode_text(setting_indoor_outdoor)
+        professionality_features = model.encode_text(professionality)
+        quality_features = model.encode_text(quality)
+
+         
+
+
+        for i in tqdm(range(n)):
+            image_path = host_picture_url_dir + f"/image_{i}.jpg"
+            image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
+            with torch.no_grad():
+                image_features = model.encode_image(image)
+                
+                people_visible_similarity = (image_features @ people_visible_features.T).softmax(dim=-1)
+                male_or_female_similarity = (image_features @ male_or_female_features.T).softmax(dim=-1)
+                setting_indoor_outdoor_similarity = (image_features @ setting_indoor_outdoor_features.T).softmax(dim=-1)
+                professionality_similarity = (image_features @ professionality_features.T).softmax(dim=-1)
+                quality_similarity = (image_features @ quality_features.T).softmax(dim=-1)
+            
+            people_visible_score = people_visible_similarity[0][0].item()
+            male_or_female_score = male_or_female_similarity[0][0].item()
+            setting_indoor_outdoor_score = setting_indoor_outdoor_similarity[0][0].item()
+            professionality_score = professionality_similarity[0][0].item()
+            quality_score = quality_similarity[0][0].item()
+
+            print(f"image_{i}.jpg")
+            print(f"people_visible_score: {people_visible_score}")
+            print(f"male or female score: {male_or_female_score}")
+            print(f"setting_indoor_outdoor_score: {setting_indoor_outdoor_score}")
+            print(f"professionality_score: {professionality_score}")
+            print(f"quality_score: {quality_score}")
+            if i>15:
+                break
+
+
+            people_visible_column.append(people_visible_score)
+            male_or_female_column.append(male_or_female_score)
+            setting_indoor_outdoor_column.append(setting_indoor_outdoor_score)
+            professionality_column.append(professionality_score)
+            quality_column.append(quality_score)
+
+        
+        self.data['host_profile_pic_people_visible'] = people_visible_column
+        self.data['host_profile_pic_male_or_female'] = male_or_female_column
+        self.data['host_profile_pic_setting_indoor_outdoor'] = setting_indoor_outdoor_column
+        self.data['host_profile_pic_professionality'] = professionality_column
+        self.data['host_profile_pic_quality'] = quality_column
+        
+            
+
+
+   # method to load a NIMA model to predict aesthetic scores
+    def load_pretrained_nima(self):
+        base_model = MobileNet(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
+        #print("MobileNetV2 model loaded successfully!")
+
+        x = GlobalAveragePooling2D()(base_model.output)
+        # hidden layer
+        x = Dense(1024, activation='relu')(x)
+        predictions = Dense(10, activation='softmax')(x)
+
+        self.aesthetic_model = Model(inputs=base_model.input, outputs=predictions)
+        # load pretrained NIMA weights (MobilnetV2)
+        weight_path = "./mobilenet_weights.h5"  
+        print(f"Loading weights from: {weight_path}")
+        try:
+            self.aesthetic_model.load_weights(weight_path, by_name=True, skip_mismatch=True)
+            print("Pre-trained NIMA weights loaded successfully!")
+        except Exception as e:
+            print(f"Error loading weights: {e}. Check if the path is correct.")
+        
+        self.aesthetic_model.compile(optimizer='adam', loss='categorical_crossentropy')
+        self.aesthetic_model.trainable = False
+
+    # method to predict aesthetic score of an image using the NIMA model
+    def predict_aesthetic_score(self, img_url):
+        try:
+            response = requests.get(img_url, timeout=5)
+            response.raise_for_status()
+
+            img = Image.open(BytesIO(response.content)).resize((224, 224), Image.LANCZOS)
+            img = img.convert('RGB')
+
+            img_array = tf.keras.preprocessing.image.img_to_array(img)
+            img_array = np.expand_dims(img_array, axis=0)
+            img_array_preprocessed = preprocess_input(img_array)
+
+            # model predictions
+            predictions = self.aesthetic_model.predict(img_array_preprocessed)[0]
+
+            # compute aesthetic score
+            aesthetic_score = np.sum(predictions * np.arange(1, 11))
+            variance = np.sum(predictions * (np.arange(1, 11) - aesthetic_score)**2)
+            standard_deviation = np.sqrt(variance)
+            print(f"Aesthetic score: {aesthetic_score}")
+            print(f"Standard deviation: {standard_deviation}")
+            
+
+            return max(1.0, min(10.0, aesthetic_score))
+
+        
+        except Exception as e:
+            print(f"Error processing image: {e}")
+            return np.nan
+    
+    def add_aesthetic_score(self):
+        pandarallel.initialize(progress_bar=True)
+        self.data['aesthetic_score'] = self.data['picture_url'].apply(lambda x: self.predict_aesthetic_score(x))
 
 
     # Returns the data
     def return_data(self):
         return self.data
     
+# Test the AddCustomFeatures class
+# Create a small DataFrame with the test image URL
+data = pd.DataFrame({
+    'picture_url': ['https://a0.muscache.com/pictures/miso/Hosting-57049/original/2ef88085-751b-47e0-9be4-8adfd8a24716.jpeg', 
+                    'https://a0.muscache.com/pictures/176e2964-5ead-4d6d-a080-5a5041ff44f1.jpg',
+                    'https://a0.muscache.com/pictures/cbe4213a-f327-4de7-b50b-f056cbb8228e.jpg',
+                    'https://images.pexels.com/photos/189349/pexels-photo-189349.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+                    'https://a0.muscache.com/pictures/19341714/7d7e006a_original.jpg',
+                    'https://a0.muscache.com/pictures/49861518/4dc13f36_original.jpg']
+})
 
 
+# Initialize the AddCustomFeatures class
+additional_features = ['aesthetic_score']
+custom_features = AddCustomFeatures(data, additional_features)
 
-data = pd.read_csv('/home/frieder/pCloudDrive/AirBnB_Daten/Preprocessed_data/germany_preprocessed/berlin/city_listings.csv')
-add_custom_features = ['distance_to_city_center', 'review_sentiment', 'average_review_length', 'spelling_errors']
-features = AddCustomFeatures(data, add_custom_features)
-data = features.return_data()
-data.to_csv('/home/frieder/pCloudDrive/AirBnB_Daten/Preprocessed_data/germany_preprocessed/berlin/city_listings_custom_features.csv', index=False)
+# Calculate the aesthetic score
+processed_data = custom_features.return_data()
+
+# Print the result
+print(processed_data[['picture_url', 'aesthetic_score']])
+
+# Debugging: Check if the image URL is accessible
+try:
+    import requests
+    from PIL import Image
+    from io import BytesIO
+
+    response = requests.get(data['picture_url'][0])
+    img = Image.open(BytesIO(response.content))
+    #print("Image downloaded successfully!")
+except Exception as e:
+    print(f"Error downloading image: {e}")
