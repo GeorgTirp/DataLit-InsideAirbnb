@@ -15,6 +15,21 @@ import spacy
 from textblob import TextBlob 
 from bs4 import BeautifulSoup  
 
+#packages for calculating aesthetic scores
+import requests
+from io import BytesIO
+import tensorflow as tf
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+from tensorflow.keras.applications import MobileNet
+from tensorflow.keras.models import Model
+from tensorflow.keras.preprocessing import image  # Needed for image loading and preprocessing
+
+
+
+print(tf.__version__)
+
+
 ##### This is a script to add additional custom features to the AirBnB data #####
 
 
@@ -46,6 +61,10 @@ class AddCustomFeatures:
         
         if 'host_profile_analysis' in additional_features:
             self.add_host_profile_analysis()
+        
+        if 'aesthetic_score' in additional_features:
+            self.load_pretrained_nima()
+            self.add_aesthetic_score()
 
         if 'listing_picture_analysis' in additional_features:
             self.add_listing_picture_analysis()
@@ -72,7 +91,7 @@ class AddCustomFeatures:
 
     # Add a sentiment score to the reviews - parallelized to utilize all cores (still takes about 1h for 10k reviews)
     def add_review_sentiment(self):
-        pandarallel.initialize(progress_bar=True)
+        pandarallel.initialize(progress_bar=True, nb_workers=10)
         self.data['sentiment_score'] = self.data['comments'].parallel_apply(self.analyze_sentiment)
         # Positive / positive + negative
 
@@ -80,7 +99,10 @@ class AddCustomFeatures:
     # Function to compute sentiment for a list of reviews (compound score)
     def analyze_sentiment(self, text):
         analyzer = SentimentIntensityAnalyzer()
-        return analyzer.polarity_scores(text)['compound']
+        if not text:  # Handle empty list case
+            return 0.0  
+        scores = [analyzer.polarity_scores(text)['compound'] for text in text]
+        return sum(scores) / len(scores)  # Calculate average
     
     
     def add_review_length(self):
@@ -222,13 +244,99 @@ class AddCustomFeatures:
             
         self.data['picture_url_setting_indoor_outdoor'] = setting_indoor_outdoor_column
 
+   # method to load a NIMA model to predict aesthetic scores
+    def load_pretrained_nima(self):
+        base_model = MobileNet(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
+        #print("MobileNetV2 model loaded successfully!")
 
+        x = GlobalAveragePooling2D()(base_model.output)
+        # hidden layer
+        x = Dense(1024, activation='relu')(x)
+        predictions = Dense(10, activation='softmax')(x)
 
+        self.aesthetic_model = Model(inputs=base_model.input, outputs=predictions)
+        # load pretrained NIMA weights (MobilnetV2)
+        weight_path = "./mobilenet_weights.h5"  
+        print(f"Loading weights from: {weight_path}")
+        try:
+            self.aesthetic_model.load_weights(weight_path, by_name=True, skip_mismatch=True)
+            print("Pre-trained NIMA weights loaded successfully!")
+        except Exception as e:
+            print(f"Error loading weights: {e}. Check if the path is correct.")
+        
+        self.aesthetic_model.compile(optimizer='adam', loss='categorical_crossentropy')
+        self.aesthetic_model.trainable = False
 
+    # method to predict aesthetic score of an image using the NIMA model
+    def predict_aesthetic_score(self, img_url):
+        try:
+            response = requests.get(img_url, timeout=5)
+            response.raise_for_status()
+
+            img = Image.open(BytesIO(response.content)).resize((224, 224), Image.LANCZOS)
+            img = img.convert('RGB')
+
+            img_array = tf.keras.preprocessing.image.img_to_array(img)
+            img_array = np.expand_dims(img_array, axis=0)
+            img_array_preprocessed = preprocess_input(img_array)
+
+            # model predictions
+            predictions = self.aesthetic_model.predict(img_array_preprocessed)[0]
+
+            # compute aesthetic score
+            aesthetic_score = np.sum(predictions * np.arange(1, 11))
+            variance = np.sum(predictions * (np.arange(1, 11) - aesthetic_score)**2)
+            standard_deviation = np.sqrt(variance)
+            print(f"Aesthetic score: {aesthetic_score}")
+            print(f"Standard deviation: {standard_deviation}")
+            
+
+            return max(1.0, min(10.0, aesthetic_score))
+
+        
+        except Exception as e:
+            print(f"Error processing image: {e}")
+            return np.nan
+    
+    def add_aesthetic_score(self):
+        pandarallel.initialize(progress_bar=True)
+        self.data['aesthetic_score'] = self.data['picture_url'].apply(lambda x: self.predict_aesthetic_score(x))
 
 
     # Returns the data
     def return_data(self):
         return self.data
     
+# Test the AddCustomFeatures class
+# Create a small DataFrame with the test image URL
+data = pd.DataFrame({
+    'picture_url': ['https://a0.muscache.com/pictures/miso/Hosting-57049/original/2ef88085-751b-47e0-9be4-8adfd8a24716.jpeg', 
+                    'https://a0.muscache.com/pictures/176e2964-5ead-4d6d-a080-5a5041ff44f1.jpg',
+                    'https://a0.muscache.com/pictures/cbe4213a-f327-4de7-b50b-f056cbb8228e.jpg',
+                    'https://images.pexels.com/photos/189349/pexels-photo-189349.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+                    'https://a0.muscache.com/pictures/19341714/7d7e006a_original.jpg',
+                    'https://a0.muscache.com/pictures/49861518/4dc13f36_original.jpg']
+})
 
+
+# Initialize the AddCustomFeatures class
+additional_features = ['aesthetic_score']
+custom_features = AddCustomFeatures(data, additional_features)
+
+# Calculate the aesthetic score
+processed_data = custom_features.return_data()
+
+# Print the result
+print(processed_data[['picture_url', 'aesthetic_score']])
+
+# Debugging: Check if the image URL is accessible
+try:
+    import requests
+    from PIL import Image
+    from io import BytesIO
+
+    response = requests.get(data['picture_url'][0])
+    img = Image.open(BytesIO(response.content))
+    #print("Image downloaded successfully!")
+except Exception as e:
+    print(f"Error downloading image: {e}")
