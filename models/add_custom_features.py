@@ -247,7 +247,7 @@ class AddCustomFeatures:
    # method to load a NIMA model to predict aesthetic scores
     def load_pretrained_nima(self):
         base_model = MobileNet(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
-        #print("MobileNetV2 model loaded successfully!")
+        print("MobileNetV2 model loaded successfully!")
 
         x = GlobalAveragePooling2D()(base_model.output)
         # hidden layer
