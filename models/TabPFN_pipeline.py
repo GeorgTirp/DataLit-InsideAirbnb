@@ -33,7 +33,7 @@ class TabPFNRegression():
         self.identifier = identifier
         self.Feature_Selection = Feature_Selection
 
-        self.reg_model = None
+        self.model = None
         self.X, self.y = self.model_specific_preprocess(data_df)
         self.train_split = train_test_split(self.X, self.y, test_size=test_split_size, random_state=42)
         self.metrics = None
@@ -58,15 +58,15 @@ class TabPFNRegression():
         """ Train and predict using Linear Regression and Random Forest"""
         reg = TabPFNRegressor()
         reg.fit(self.X, self.y)
-        self.reg_model = reg
-        return self.reg_model
+        self.model = reg
+        return self.model
        
     def predict(self, X_in: pd.DataFrame, save_results=False) -> Dict:
         """Predict using the trained model"""
-        if self.reg_model is None:
+        if self.model is None:
             raise ValueError("Model not fitted yet")
         #X_in = X_in[Feature_Selection['features']]
-        predictions = self.reg_model.predict(X_in)
+        predictions = self.model.predict(X_in)
 
         if save_results == True:
             # Optionally save predictions
@@ -80,7 +80,7 @@ class TabPFNRegression():
         """ Evaluate the models using mean squared error, r2 score and cross validation"""
         X_train, X_test, y_train, y_test = self.train_split
 
-        pred = self.reg_model.predict(X_test)
+        pred = self.model.predict(X_test)
         mse = mean_squared_error(y_test, pred)
         r2, p_price = pearsonr(y_test, pred)
         
@@ -102,7 +102,7 @@ class TabPFNRegression():
     
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 
-    def feature_importance(self, save_results=True) -> Dict:
+    def feature_importance(self, batch_size=10, shap_sample = 1000, background_sample=100 ,save_results=True) -> Dict:
         """Return the feature importance for the Random Forest and linear model"""
         logging.info("Starting feature importance evaluation.")
 
@@ -119,8 +119,8 @@ class TabPFNRegression():
                 X_test_loco = X_test.drop(columns=[feature])
 
                 # Train the model and get predictions
-                self.reg_model.fit(X_train_loco, y_train)
-                loco_pred = self.reg_model.predict(X_test_loco)
+                self.model.fit(X_train_loco, y_train)
+                loco_pred = self.model.predict(X_test_loco)
 
                 # Compute the MSE and store the importance
                 loco_mse = mean_squared_error(y_test, loco_pred)
@@ -139,28 +139,42 @@ class TabPFNRegression():
             # Initialize SHAP
             shap.initjs()
 
-            # Sample background data
-            background_data = self.X.sample(50, random_state=42)
-            logging.info("Background data for SHAP initialized.")
+            # Create KernelExplainer with a small background sample
+            background = shap.sample(self.X, background_sample)  # Sample a small background set
+            #ensure that explainer is sampling from a df not an array
+            explainer = shap.KernelExplainer(lambda x: model.predict(pd.DataFrame(x, columns=self.X.columns)), self.X, background)
 
-            # Initialize SHAP Explainer
-            shap_values = []
-            explainer = shap.DeepExplainer(self.model, background_data)
-            for row in tqdm(self.X.itertuples(index=False), total=len(self.X), desc="Computing SHAP values"):
-                row_shap = explainer.shap_values(pd.DataFrame([row], columns=self.X.columns))
-                shap_values.append(row_shap)
-            # Convert list of arrays to a single array
-            shap_values = np.array(shap_values).squeeze()
-            # Plot SHAP summary
+            # Define batch size
+            approx_shape_values = True
+            if approx_shape_values:
+                if len(self.X) < batch_size:
+                    raise ValueError("Sample size exceeds the number of available datapoints")
+                X = shap.sample(self.X, shap_sample)
+            else:
+                X = self.X
+            num_samples = len(X)
+
+            # Store results
+            all_shap_values = []
+
+            # Loop through test data in batches
+            for i in range(0, num_samples, batch_size):
+                batch = X[i:i+batch_size]  # Select a batch of test points
+                shap_values_batch = explainer.shap_values(batch, nsamples=300)  # Compute SHAP for batch
+                all_shap_values.append(shap_values_batch)  # Store results
+
+            # Concatenate results into a single array
+            shap_values = np.concatenate(all_shap_values, axis=0)
+            print(shap_values.shape)
 
             # Plot aggregated SHAP values (Feature impact)
-            shap.summary_plot(shap_values, features=self.X, feature_names=self.X.columns, show=False, max_display=40)
+            shap.summary_plot(shap_values, features=X, feature_names=X.columns, show=False, max_display=40)
             plt.title(f'{self.identifier} SHAP Summary Plot (Aggregated)', fontsize=16)
             if save_results:
                 plt.subplots_adjust(top=0.90)
                 plt.savefig(f'{self.save_path}/{self.identifier}_shap_aggregated_beeswarm.png')
                 plt.close()
-                shap.summary_plot(shap_values, self.X, plot_type="bar", show=False)
+                shap.summary_plot(shap_values, X, plot_type="bar", show=False)
                 plt.savefig(f'{self.save_path}/{self.identifier}_shap_aggregated_bar.png')
                 plt.close()
             logging.info("SHAP summary plot generated.")
@@ -173,7 +187,7 @@ class TabPFNRegression():
         logging.info("SHAP importance evaluation completed.")
     
         logging.info("Evaluating LOCO feature importances...")
-        loco_attributions = loco_importances()
+        loco_attributions = loco_importances(X_train, y_test)
         logging.info("LOCO importance evaluation completed.")
     
         # Save results if specified
@@ -210,7 +224,7 @@ if __name__ == "__main__":
     #folder_path = "/Users/georgtirpitz/Documents/Data_Literacy"
     folder_path = "/home/georg/Documents/Master/Data_Literacy"
     data_df = pd.read_csv(folder_path + "/city_listings.csv")
-    identifier = "test_TabPFN"
+    identifier = "Berlin_prediction_TabPFN"
     safe_path = folder_path + "/DataLit-InsideAirbnb" + "/results/" + identifier + "/"
     
     # Setting features and target
@@ -235,7 +249,7 @@ if __name__ == "__main__":
     model = TabPFNRegression(data_df, Feature_Selection, test_split_size, safe_path, identifier)
     X, y = model.model_specific_preprocess(data_df, Feature_Selection)
     model.fit()
-    preds = model.predict(X)
+    preds = model.predict(X, save_results=True)
     metrics = model.evaluate()
-    importances = model.feature_importance()
+    #importances = model.feature_importance(5, 1000, 100, save_results=True)
     
