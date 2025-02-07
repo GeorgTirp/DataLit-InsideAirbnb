@@ -1,0 +1,229 @@
+2025-02-07 13:33:21,460 - INFO - Starting the XGBoost pipeline...
+2025-02-07 13:33:21,460 - INFO - ----------------------------------
+2025-02-07 13:33:21,460 - INFO - Parameters:
+2025-02-07 13:33:21,460 - INFO - Data: /home/georg/Documents/Master/Data_Literacy/data/city_listings_custom_features.csv
+2025-02-07 13:33:21,460 - INFO - Target: price
+2025-02-07 13:33:21,460 - INFO - Features: ['review_scores_value', 'distance_to_city_center', 'average_review_length', 'reviews_per_month', 'sentiment_score', 'host_profile_pic_visible', 'host_listings_count', 'host_total_listings_count', 'minimum_nights_avg_ntm', 'maximum_nights_avg_ntm', 'number_of_reviews', 'number_of_reviews_ltm', 'number_of_reviews_l30d', 'review_scores_rating', 'review_scores_accuracy', 'review_scores_cleanliness', 'review_scores_checkin', 'review_scores_communication', 'review_scores_location', 'calculated_host_listings_count', 'calculated_host_listings_count_entire_homes', 'calculated_host_listings_count_private_rooms', 'calculated_host_listings_count_shared_rooms', 'host_profile_pic_people_visible', 'host_profile_pic_male_or_female', 'host_profile_pic_setting_indoor_outdoor', 'host_profile_pic_professionality', 'host_profile_pic_quality', 'picture_url_setting_indoor_outdoor', 'accommodates', 'bathrooms', 'bedrooms', 'beds']
+2025-02-07 13:33:21,460 - INFO - Outlier removal: False
+2025-02-07 13:33:21,460 - INFO - CV: 5
+2025-02-07 13:33:21,460 - INFO - Correlation threshold: 0.9
+2025-02-07 13:33:21,460 - INFO - Save results: True
+2025-02-07 13:33:21,460 - INFO - Additional custom features: ['distance_to_city_center', 'average_review_length']
+2025-02-07 13:33:21,460 - INFO - Save path: results//Berlin_prediction_XGBoost
+2025-02-07 13:33:21,460 - INFO - Identifier: Berlin_prediction_XGBoost
+2025-02-07 13:33:21,460 - INFO - Random state: 42
+2025-02-07 13:33:21,460 - INFO - ----------------------------------
+2025-02-07 13:33:49,275 - INFO - Starting the XGBoost pipeline...
+2025-02-07 13:33:49,275 - INFO - ----------------------------------
+2025-02-07 13:33:49,275 - INFO - Parameters:
+2025-02-07 13:33:49,275 - INFO - Data: /home/georg/Documents/Master/Data_Literacy/data/city_listings_custom_features.csv
+2025-02-07 13:33:49,275 - INFO - Target: price
+2025-02-07 13:33:49,275 - INFO - Features: ['review_scores_value', 'distance_to_city_center', 'average_review_length', 'reviews_per_month', 'sentiment_score', 'host_profile_pic_visible', 'host_listings_count', 'host_total_listings_count', 'minimum_nights_avg_ntm', 'maximum_nights_avg_ntm', 'number_of_reviews', 'number_of_reviews_ltm', 'number_of_reviews_l30d', 'review_scores_rating', 'review_scores_accuracy', 'review_scores_cleanliness', 'review_scores_checkin', 'review_scores_communication', 'review_scores_location', 'calculated_host_listings_count', 'calculated_host_listings_count_entire_homes', 'calculated_host_listings_count_private_rooms', 'calculated_host_listings_count_shared_rooms', 'host_profile_pic_people_visible', 'host_profile_pic_male_or_female', 'host_profile_pic_setting_indoor_outdoor', 'host_profile_pic_professionality', 'host_profile_pic_quality', 'picture_url_setting_indoor_outdoor', 'accommodates', 'bathrooms', 'bedrooms', 'beds']
+2025-02-07 13:33:49,275 - INFO - Outlier removal: False
+2025-02-07 13:33:49,275 - INFO - CV: 5
+2025-02-07 13:33:49,275 - INFO - Correlation threshold: 0.9
+2025-02-07 13:33:49,275 - INFO - Save results: True
+2025-02-07 13:33:49,275 - INFO - Additional custom features: ['distance_to_city_center', 'average_review_length']
+2025-02-07 13:33:49,275 - INFO - Save path: results//Berlin_prediction_XGBoost
+2025-02-07 13:33:49,275 - INFO - Identifier: Berlin_prediction_XGBoost
+2025-02-07 13:33:49,275 - INFO - Random state: 42
+2025-02-07 13:33:49,275 - INFO - ----------------------------------
+2025-02-07 13:33:50,392 - INFO - Using the following features: ['review_scores_value', 'distance_to_city_center', 'average_review_length', 'reviews_per_month', 'sentiment_score', 'host_profile_pic_visible', 'host_listings_count', 'host_total_listings_count', 'minimum_nights_avg_ntm', 'maximum_nights_avg_ntm', 'number_of_reviews', 'number_of_reviews_ltm', 'number_of_reviews_l30d', 'review_scores_rating', 'review_scores_accuracy', 'review_scores_cleanliness', 'review_scores_checkin', 'review_scores_communication', 'review_scores_location', 'calculated_host_listings_count', 'calculated_host_listings_count_entire_homes', 'calculated_host_listings_count_private_rooms', 'calculated_host_listings_count_shared_rooms', 'host_profile_pic_people_visible', 'host_profile_pic_male_or_female', 'host_profile_pic_setting_indoor_outdoor', 'host_profile_pic_professionality', 'host_profile_pic_quality', 'picture_url_setting_indoor_outdoor', 'accommodates', 'bathrooms', 'bedrooms', 'beds']
+2025-02-07 13:33:50,392 - INFO - Index(['Unnamed: 0', 'city', 'listing_url', 'scrape_id', 'last_scraped',
+       'source', 'name', 'description', 'neighborhood_overview', 'picture_url',
+       'host_id', 'host_url', 'host_name', 'host_since', 'host_location',
+       'host_about', 'host_response_time', 'host_response_rate',
+       'host_acceptance_rate', 'host_is_superhost', 'host_thumbnail_url',
+       'host_picture_url', 'host_neighbourhood', 'host_listings_count',
+       'host_total_listings_count', 'host_verifications',
+       'host_has_profile_pic', 'host_identity_verified', 'neighbourhood',
+       'neighbourhood_cleansed', 'neighbourhood_group_cleansed', 'latitude',
+       'longitude', 'property_type', 'room_type', 'accommodates', 'bathrooms',
+       'bathrooms_text', 'bedrooms', 'beds', 'amenities', 'price',
+       'minimum_nights', 'maximum_nights', 'minimum_minimum_nights',
+       'maximum_minimum_nights', 'minimum_maximum_nights',
+       'maximum_maximum_nights', 'minimum_nights_avg_ntm',
+       'maximum_nights_avg_ntm', 'calendar_updated', 'has_availability',
+       'availability_30', 'availability_60', 'availability_90',
+       'availability_365', 'calendar_last_scraped', 'number_of_reviews',
+       'number_of_reviews_ltm', 'number_of_reviews_l30d', 'first_review',
+       'last_review', 'review_scores_rating', 'review_scores_accuracy',
+       'review_scores_cleanliness', 'review_scores_checkin',
+       'review_scores_communication', 'review_scores_location',
+       'review_scores_value', 'license', 'instant_bookable',
+       'calculated_host_listings_count',
+       'calculated_host_listings_count_entire_homes',
+       'calculated_host_listings_count_private_rooms',
+       'calculated_host_listings_count_shared_rooms', 'reviews_per_month',
+       'comments', 'sentiment_score', 'average_review_length',
+       'host_profile_pic_people_visible', 'host_profile_pic_male_or_female',
+       'host_profile_pic_setting_indoor_outdoor',
+       'host_profile_pic_professionality', 'host_profile_pic_quality',
+       'picture_url_setting_indoor_outdoor'],
+      dtype='object')
+2025-02-07 13:33:50,392 - INFO - ['review_scores_value', 'distance_to_city_center', 'average_review_length', 'reviews_per_month', 'sentiment_score', 'host_profile_pic_visible', 'host_listings_count', 'host_total_listings_count', 'minimum_nights_avg_ntm', 'maximum_nights_avg_ntm', 'number_of_reviews', 'number_of_reviews_ltm', 'number_of_reviews_l30d', 'review_scores_rating', 'review_scores_accuracy', 'review_scores_cleanliness', 'review_scores_checkin', 'review_scores_communication', 'review_scores_location', 'calculated_host_listings_count', 'calculated_host_listings_count_entire_homes', 'calculated_host_listings_count_private_rooms', 'calculated_host_listings_count_shared_rooms', 'host_profile_pic_people_visible', 'host_profile_pic_male_or_female', 'host_profile_pic_setting_indoor_outdoor', 'host_profile_pic_professionality', 'host_profile_pic_quality', 'picture_url_setting_indoor_outdoor', 'accommodates', 'bathrooms', 'bedrooms', 'beds']
+2025-02-07 13:34:32,084 - INFO - Starting the XGBoost pipeline...
+2025-02-07 13:34:32,084 - INFO - ----------------------------------
+2025-02-07 13:34:32,084 - INFO - Parameters:
+2025-02-07 13:34:32,084 - INFO - Data: /home/georg/Documents/Master/Data_Literacy/data/city_listings_custom_features.csv
+2025-02-07 13:34:32,084 - INFO - Target: price
+2025-02-07 13:34:32,084 - INFO - Features: ['review_scores_value', 'distance_to_city_center', 'average_review_length', 'reviews_per_month', 'sentiment_score', 'host_profile_pic_visible', 'host_listings_count', 'host_total_listings_count', 'minimum_nights_avg_ntm', 'maximum_nights_avg_ntm', 'number_of_reviews', 'number_of_reviews_ltm', 'number_of_reviews_l30d', 'review_scores_rating', 'review_scores_accuracy', 'review_scores_cleanliness', 'review_scores_checkin', 'review_scores_communication', 'review_scores_location', 'calculated_host_listings_count', 'calculated_host_listings_count_entire_homes', 'calculated_host_listings_count_private_rooms', 'calculated_host_listings_count_shared_rooms', 'host_profile_pic_people_visible', 'host_profile_pic_male_or_female', 'host_profile_pic_setting_indoor_outdoor', 'host_profile_pic_professionality', 'host_profile_pic_quality', 'picture_url_setting_indoor_outdoor', 'accommodates', 'bathrooms', 'bedrooms', 'beds']
+2025-02-07 13:34:32,084 - INFO - Outlier removal: False
+2025-02-07 13:34:32,084 - INFO - CV: 5
+2025-02-07 13:34:32,084 - INFO - Correlation threshold: 0.9
+2025-02-07 13:34:32,084 - INFO - Save results: True
+2025-02-07 13:34:32,084 - INFO - Additional custom features: []
+2025-02-07 13:34:32,084 - INFO - Save path: results//Berlin_prediction_XGBoost
+2025-02-07 13:34:32,084 - INFO - Identifier: Berlin_prediction_XGBoost
+2025-02-07 13:34:32,084 - INFO - Random state: 42
+2025-02-07 13:34:32,084 - INFO - ----------------------------------
+2025-02-07 13:34:33,197 - INFO - Using the following features: ['review_scores_value', 'distance_to_city_center', 'average_review_length', 'reviews_per_month', 'sentiment_score', 'host_profile_pic_visible', 'host_listings_count', 'host_total_listings_count', 'minimum_nights_avg_ntm', 'maximum_nights_avg_ntm', 'number_of_reviews', 'number_of_reviews_ltm', 'number_of_reviews_l30d', 'review_scores_rating', 'review_scores_accuracy', 'review_scores_cleanliness', 'review_scores_checkin', 'review_scores_communication', 'review_scores_location', 'calculated_host_listings_count', 'calculated_host_listings_count_entire_homes', 'calculated_host_listings_count_private_rooms', 'calculated_host_listings_count_shared_rooms', 'host_profile_pic_people_visible', 'host_profile_pic_male_or_female', 'host_profile_pic_setting_indoor_outdoor', 'host_profile_pic_professionality', 'host_profile_pic_quality', 'picture_url_setting_indoor_outdoor', 'accommodates', 'bathrooms', 'bedrooms', 'beds']
+2025-02-07 13:34:33,197 - INFO - Index(['Unnamed: 0', 'city', 'listing_url', 'scrape_id', 'last_scraped',
+       'source', 'name', 'description', 'neighborhood_overview', 'picture_url',
+       'host_id', 'host_url', 'host_name', 'host_since', 'host_location',
+       'host_about', 'host_response_time', 'host_response_rate',
+       'host_acceptance_rate', 'host_is_superhost', 'host_thumbnail_url',
+       'host_picture_url', 'host_neighbourhood', 'host_listings_count',
+       'host_total_listings_count', 'host_verifications',
+       'host_has_profile_pic', 'host_identity_verified', 'neighbourhood',
+       'neighbourhood_cleansed', 'neighbourhood_group_cleansed', 'latitude',
+       'longitude', 'property_type', 'room_type', 'accommodates', 'bathrooms',
+       'bathrooms_text', 'bedrooms', 'beds', 'amenities', 'price',
+       'minimum_nights', 'maximum_nights', 'minimum_minimum_nights',
+       'maximum_minimum_nights', 'minimum_maximum_nights',
+       'maximum_maximum_nights', 'minimum_nights_avg_ntm',
+       'maximum_nights_avg_ntm', 'calendar_updated', 'has_availability',
+       'availability_30', 'availability_60', 'availability_90',
+       'availability_365', 'calendar_last_scraped', 'number_of_reviews',
+       'number_of_reviews_ltm', 'number_of_reviews_l30d', 'first_review',
+       'last_review', 'review_scores_rating', 'review_scores_accuracy',
+       'review_scores_cleanliness', 'review_scores_checkin',
+       'review_scores_communication', 'review_scores_location',
+       'review_scores_value', 'license', 'instant_bookable',
+       'calculated_host_listings_count',
+       'calculated_host_listings_count_entire_homes',
+       'calculated_host_listings_count_private_rooms',
+       'calculated_host_listings_count_shared_rooms', 'reviews_per_month',
+       'comments', 'sentiment_score', 'average_review_length',
+       'host_profile_pic_people_visible', 'host_profile_pic_male_or_female',
+       'host_profile_pic_setting_indoor_outdoor',
+       'host_profile_pic_professionality', 'host_profile_pic_quality',
+       'picture_url_setting_indoor_outdoor'],
+      dtype='object')
+2025-02-07 13:34:33,197 - INFO - ['review_scores_value', 'distance_to_city_center', 'average_review_length', 'reviews_per_month', 'sentiment_score', 'host_profile_pic_visible', 'host_listings_count', 'host_total_listings_count', 'minimum_nights_avg_ntm', 'maximum_nights_avg_ntm', 'number_of_reviews', 'number_of_reviews_ltm', 'number_of_reviews_l30d', 'review_scores_rating', 'review_scores_accuracy', 'review_scores_cleanliness', 'review_scores_checkin', 'review_scores_communication', 'review_scores_location', 'calculated_host_listings_count', 'calculated_host_listings_count_entire_homes', 'calculated_host_listings_count_private_rooms', 'calculated_host_listings_count_shared_rooms', 'host_profile_pic_people_visible', 'host_profile_pic_male_or_female', 'host_profile_pic_setting_indoor_outdoor', 'host_profile_pic_professionality', 'host_profile_pic_quality', 'picture_url_setting_indoor_outdoor', 'accommodates', 'bathrooms', 'bedrooms', 'beds']
+2025-02-07 13:35:11,091 - INFO - Starting the XGBoost pipeline...
+2025-02-07 13:35:11,092 - INFO - ----------------------------------
+2025-02-07 13:35:11,092 - INFO - Parameters:
+2025-02-07 13:35:11,092 - INFO - Data: /home/georg/Documents/Master/Data_Literacy/data/city_listings_custom_features.csv
+2025-02-07 13:35:11,092 - INFO - Target: price
+2025-02-07 13:35:11,092 - INFO - Features: ['review_scores_value', 'average_review_length', 'reviews_per_month', 'sentiment_score', 'host_listings_count', 'host_total_listings_count', 'minimum_nights_avg_ntm', 'maximum_nights_avg_ntm', 'number_of_reviews', 'number_of_reviews_ltm', 'number_of_reviews_l30d', 'review_scores_rating', 'review_scores_accuracy', 'review_scores_cleanliness', 'review_scores_checkin', 'review_scores_communication', 'review_scores_location', 'calculated_host_listings_count', 'calculated_host_listings_count_entire_homes', 'calculated_host_listings_count_private_rooms', 'calculated_host_listings_count_shared_rooms', 'host_profile_pic_people_visible', 'host_profile_pic_male_or_female', 'host_profile_pic_setting_indoor_outdoor', 'host_profile_pic_professionality', 'host_profile_pic_quality', 'picture_url_setting_indoor_outdoor', 'accommodates', 'bathrooms', 'bedrooms', 'beds']
+2025-02-07 13:35:11,092 - INFO - Outlier removal: False
+2025-02-07 13:35:11,092 - INFO - CV: 5
+2025-02-07 13:35:11,092 - INFO - Correlation threshold: 0.9
+2025-02-07 13:35:11,092 - INFO - Save results: True
+2025-02-07 13:35:11,092 - INFO - Additional custom features: []
+2025-02-07 13:35:11,092 - INFO - Save path: results//Berlin_prediction_XGBoost
+2025-02-07 13:35:11,092 - INFO - Identifier: Berlin_prediction_XGBoost
+2025-02-07 13:35:11,092 - INFO - Random state: 42
+2025-02-07 13:35:11,092 - INFO - ----------------------------------
+2025-02-07 13:35:12,207 - INFO - Using the following features: ['review_scores_value', 'average_review_length', 'reviews_per_month', 'sentiment_score', 'host_listings_count', 'host_total_listings_count', 'minimum_nights_avg_ntm', 'maximum_nights_avg_ntm', 'number_of_reviews', 'number_of_reviews_ltm', 'number_of_reviews_l30d', 'review_scores_rating', 'review_scores_accuracy', 'review_scores_cleanliness', 'review_scores_checkin', 'review_scores_communication', 'review_scores_location', 'calculated_host_listings_count', 'calculated_host_listings_count_entire_homes', 'calculated_host_listings_count_private_rooms', 'calculated_host_listings_count_shared_rooms', 'host_profile_pic_people_visible', 'host_profile_pic_male_or_female', 'host_profile_pic_setting_indoor_outdoor', 'host_profile_pic_professionality', 'host_profile_pic_quality', 'picture_url_setting_indoor_outdoor', 'accommodates', 'bathrooms', 'bedrooms', 'beds']
+2025-02-07 13:35:12,208 - INFO - Index(['Unnamed: 0', 'city', 'listing_url', 'scrape_id', 'last_scraped',
+       'source', 'name', 'description', 'neighborhood_overview', 'picture_url',
+       'host_id', 'host_url', 'host_name', 'host_since', 'host_location',
+       'host_about', 'host_response_time', 'host_response_rate',
+       'host_acceptance_rate', 'host_is_superhost', 'host_thumbnail_url',
+       'host_picture_url', 'host_neighbourhood', 'host_listings_count',
+       'host_total_listings_count', 'host_verifications',
+       'host_has_profile_pic', 'host_identity_verified', 'neighbourhood',
+       'neighbourhood_cleansed', 'neighbourhood_group_cleansed', 'latitude',
+       'longitude', 'property_type', 'room_type', 'accommodates', 'bathrooms',
+       'bathrooms_text', 'bedrooms', 'beds', 'amenities', 'price',
+       'minimum_nights', 'maximum_nights', 'minimum_minimum_nights',
+       'maximum_minimum_nights', 'minimum_maximum_nights',
+       'maximum_maximum_nights', 'minimum_nights_avg_ntm',
+       'maximum_nights_avg_ntm', 'calendar_updated', 'has_availability',
+       'availability_30', 'availability_60', 'availability_90',
+       'availability_365', 'calendar_last_scraped', 'number_of_reviews',
+       'number_of_reviews_ltm', 'number_of_reviews_l30d', 'first_review',
+       'last_review', 'review_scores_rating', 'review_scores_accuracy',
+       'review_scores_cleanliness', 'review_scores_checkin',
+       'review_scores_communication', 'review_scores_location',
+       'review_scores_value', 'license', 'instant_bookable',
+       'calculated_host_listings_count',
+       'calculated_host_listings_count_entire_homes',
+       'calculated_host_listings_count_private_rooms',
+       'calculated_host_listings_count_shared_rooms', 'reviews_per_month',
+       'comments', 'sentiment_score', 'average_review_length',
+       'host_profile_pic_people_visible', 'host_profile_pic_male_or_female',
+       'host_profile_pic_setting_indoor_outdoor',
+       'host_profile_pic_professionality', 'host_profile_pic_quality',
+       'picture_url_setting_indoor_outdoor'],
+      dtype='object')
+2025-02-07 13:35:12,208 - INFO - ['review_scores_value', 'average_review_length', 'reviews_per_month', 'sentiment_score', 'host_listings_count', 'host_total_listings_count', 'minimum_nights_avg_ntm', 'maximum_nights_avg_ntm', 'number_of_reviews', 'number_of_reviews_ltm', 'number_of_reviews_l30d', 'review_scores_rating', 'review_scores_accuracy', 'review_scores_cleanliness', 'review_scores_checkin', 'review_scores_communication', 'review_scores_location', 'calculated_host_listings_count', 'calculated_host_listings_count_entire_homes', 'calculated_host_listings_count_private_rooms', 'calculated_host_listings_count_shared_rooms', 'host_profile_pic_people_visible', 'host_profile_pic_male_or_female', 'host_profile_pic_setting_indoor_outdoor', 'host_profile_pic_professionality', 'host_profile_pic_quality', 'picture_url_setting_indoor_outdoor', 'accommodates', 'bathrooms', 'bedrooms', 'beds']
+2025-02-07 13:35:12,209 - INFO - Features:
+2025-02-07 13:35:12,273 - INFO -    review_scores_value  average_review_length  reviews_per_month  sentiment_score  ...  accommodates  bathrooms  bedrooms  beds
+0                 4.76              46.179104               0.80         0.017319  ...             4        2.0       2.0   3.0
+1                 4.73              49.014706               0.43         0.017686  ...             4        1.5       3.0   3.0
+2                 4.47              40.882353               0.20         0.019071  ...             2        1.0       0.0   1.0
+3                 4.40              36.187500               0.10         0.019101  ...             4        2.0       2.0   2.0
+4                 4.77              46.898305               0.73         0.015647  ...             2        1.5       1.0   1.0
+
+[5 rows x 31 columns]
+2025-02-07 13:35:12,285 - INFO - ----------------------------------
+2025-02-07 13:35:12,285 - INFO - Target:
+2025-02-07 13:35:12,285 - INFO - 0    290.0
+1    240.0
+2    100.0
+3    186.0
+4     78.0
+Name: price, dtype: float64
+2025-02-07 13:35:12,286 - INFO - ----------------------------------
+2025-02-07 13:35:12,286 - INFO - Number of samples: 8972
+2025-02-07 13:35:12,286 - INFO - ----------------------------------
+2025-02-07 13:35:12,844 - INFO - Preprocessed data saved as data/Berlin_prediction_XGBoost_X.csv
+2025-02-07 13:35:12,844 - INFO - Training the model...
+2025-02-07 13:35:12,844 - INFO - ----------------------------------
+2025-02-07 13:35:12,844 - INFO - Hyperparameter grid:
+2025-02-07 13:35:12,844 - INFO - learning_rate: [0.001, 0.01, 0.1, 0.2]
+2025-02-07 13:35:12,844 - INFO - ----------------------------------
+2025-02-07 13:35:12,845 - INFO - ----------------------------------
+2025-02-07 13:35:12,845 - INFO - Training fold [1/5]:
+2025-02-07 13:35:15,187 - INFO - Mean Squared Error: 5541.640784690785 for fold [1/5]
+2025-02-07 13:35:15,187 - INFO - Best hyperparameters: {'learning_rate': 0.1}
+2025-02-07 13:35:15,187 - INFO - Estimating SHAP values...
+2025-02-07 13:35:15,825 - INFO - SHAP values estimated for fold [1/5]
+2025-02-07 13:35:15,826 - INFO - ----------------------------------
+2025-02-07 13:35:15,826 - INFO - ----------------------------------
+2025-02-07 13:35:15,826 - INFO - Training fold [2/5]:
+2025-02-07 13:35:16,885 - INFO - Mean Squared Error: 4591.338944230472 for fold [2/5]
+2025-02-07 13:35:16,885 - INFO - Best hyperparameters: {'learning_rate': 0.1}
+2025-02-07 13:35:16,887 - INFO - Estimating SHAP values...
+2025-02-07 13:35:17,529 - INFO - SHAP values estimated for fold [2/5]
+2025-02-07 13:35:17,529 - INFO - ----------------------------------
+2025-02-07 13:35:17,529 - INFO - ----------------------------------
+2025-02-07 13:35:17,529 - INFO - Training fold [3/5]:
+2025-02-07 13:35:18,643 - INFO - Mean Squared Error: 5761.708554236519 for fold [3/5]
+2025-02-07 13:35:18,643 - INFO - Best hyperparameters: {'learning_rate': 0.1}
+2025-02-07 13:35:18,643 - INFO - Estimating SHAP values...
+2025-02-07 13:35:19,324 - INFO - SHAP values estimated for fold [3/5]
+2025-02-07 13:35:19,324 - INFO - ----------------------------------
+2025-02-07 13:35:19,325 - INFO - ----------------------------------
+2025-02-07 13:35:19,325 - INFO - Training fold [4/5]:
+2025-02-07 13:35:20,422 - INFO - Mean Squared Error: 5625.83765402199 for fold [4/5]
+2025-02-07 13:35:20,422 - INFO - Best hyperparameters: {'learning_rate': 0.1}
+2025-02-07 13:35:20,422 - INFO - Estimating SHAP values...
+2025-02-07 13:35:21,051 - INFO - SHAP values estimated for fold [4/5]
+2025-02-07 13:35:21,051 - INFO - ----------------------------------
+2025-02-07 13:35:21,052 - INFO - ----------------------------------
+2025-02-07 13:35:21,052 - INFO - Training fold [5/5]:
+2025-02-07 13:35:22,214 - INFO - Mean Squared Error: 5539.288243991426 for fold [5/5]
+2025-02-07 13:35:22,214 - INFO - Best hyperparameters: {'learning_rate': 0.1}
+2025-02-07 13:35:22,214 - INFO - Estimating SHAP values...
+2025-02-07 13:35:22,830 - INFO - SHAP values estimated for fold [5/5]
+2025-02-07 13:35:22,830 - INFO - ----------------------------------
+2025-02-07 13:35:22,830 - INFO - All folds trained
+2025-02-07 13:35:22,831 - INFO - Evaluating Model...
+2025-02-07 13:35:22,832 - INFO - Pearson correlation: 0.7690884861622813, p-value: 0.0
+2025-02-07 13:35:22,832 - INFO - Nested CV Mean Squared Error: 5411.962836234239
+2025-02-07 13:35:22,842 - INFO - Results saved as results/Berlin_prediction_XGBoost_results.csv
+2025-02-07 13:35:22,948 - INFO - Mean SHAP values saved as results//Berlin_prediction_XGBoost/Berlin_prediction_XGBoost_mean_shap_values.npy
