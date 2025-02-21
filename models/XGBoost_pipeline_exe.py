@@ -6,16 +6,20 @@ from XGBoost_pipeline import run_XGBoost_pipeline
 
 #######-- Set the parameters for the analysis --#######
 # Preprocessed data
-data = '/home/frieder/pCloudDrive/AirBnB_Daten/Preprocessed_data/switzerland_preprocessed/zurich/city_listings.csv'
+data = '/home/sn/pCloudDrive/AirBnB_Daten/Preprocessed_data/germany_preprocessed/berlin/city_listings_custom_features.csv'
 
 # Name of the variable to predict in the data table
 target = 'price'
 
 # Add custom features, not provided by AirBnb? currently supported: ['distance_to_city_center', 'average_review_length']
-add_custom_features = ['distance_to_city_center', 'average_review_length']
+add_custom_features = []
 
 # Name of the variables to use for the prediction
-features = ['accommodates', 'bathrooms', 'bedrooms', 'beds', 'review_scores_value']  # Emtpy list means all the variables except the target
+# Load the data to determine numeric features
+df = pd.read_csv(data, on_bad_lines="skip")
+numeric_features = df.select_dtypes(include=['number']).columns.tolist()
+features = [col for col in numeric_features if col != target]
+print(features)
 
 # Outlier removal?
 outlier_removal = False
@@ -33,7 +37,7 @@ save_results = True
 safe_path = 'results/'
 
 # Identifier
-identifier = 'Zurich_prediction'
+identifier = 'Berlin_with_custom_features_XGBoost'
 
 # Random state
 random_state = 42

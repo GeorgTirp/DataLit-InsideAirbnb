@@ -47,27 +47,55 @@ class AddCustomFeatures:
 
         # Add centrality feature:
         if 'distance_to_city_center' in additional_features:
-            self.calculate_centrality()
+            try:
+                print("Calculating centrality...")
+                self.calculate_centrality()
+            except Exception as e:
+                print(f"Error calculating centrality: {e}")
 
         if 'review_sentiment' in additional_features:
-            self.add_review_sentiment()
+            try:
+                print("Adding review sentiment...")
+                self.add_review_sentiment()
+            except Exception as e:
+                print(f"Error adding review sentiment: {e}")
 
         if 'average_review_length' in additional_features:
-            self.add_review_length()
+            try:
+                print("Adding review length...")
+                self.add_review_length()
+            except Exception as e:
+                print(f"Error adding review length: {e}")
 
         if 'spelling_errors' in additional_features:
-            self.nlp = spacy.load("en_core_web_sm")
-            self.add_spelling_evaluation()
+            try:
+                print("Adding spelling evaluation...")
+                self.nlp = spacy.load("en_core_web_sm")
+                self.add_spelling_evaluation()
+            except Exception as e:
+                print(f"Error adding spelling evaluation: {e}")
         
         if 'host_profile_analysis' in additional_features:
-            self.add_host_profile_analysis()
+            try:
+                print("Adding host profile analysis...")
+                self.add_host_profile_analysis()
+            except Exception as e:
+                print(f"Error adding host profile analysis: {e}")
         
         if 'aesthetic_score' in additional_features:
-            self.load_pretrained_nima()
-            self.add_aesthetic_score()
+            try:
+                print("Adding aesthetic score...")
+                self.load_pretrained_nima()
+                self.add_aesthetic_score()
+            except Exception as e:
+                print(f"Error adding aesthetic score: {e}")
 
         if 'listing_picture_analysis' in additional_features:
-            self.add_listing_picture_analysis()
+            try:
+                print("Adding listing picture analysis...")
+                self.add_listing_picture_analysis()
+            except Exception as e:
+                print(f"Error adding listing picture analysis: {e}")
 
 
     # Calculates the distance from the middle of all the listing (e.g. city center) for each listing as measure of inverse centrality
@@ -154,7 +182,7 @@ class AddCustomFeatures:
 
         city = self.data["city"].iloc[0]
         n = len(self.data)
-        host_picture_url_dir = self.host_profile_picture_dir + f"/{city}/" + "host_picture_url"
+        host_picture_url_dir = self.host_profile_picture_dir
         print(host_picture_url_dir)
         assert len(os.listdir(host_picture_url_dir)) == n, "number of pictures in host profile picture directory must match number of listings (len of df)"
 
@@ -218,7 +246,7 @@ class AddCustomFeatures:
 
         city = self.data["city"].iloc[0]
         n = len(self.data)
-        picture_url_dir = self.picture_url_dir + f"/{city}/" + "picture_url"
+        picture_url_dir = self.picture_url_dir
         print(picture_url_dir)
         assert len(os.listdir(picture_url_dir)) == n, "number of pictures in host profile picture directory must match number of listings (len of df)"
 
@@ -274,7 +302,7 @@ class AddCustomFeatures:
 
         city = self.data["city"].iloc[0]
         n = len(self.data)
-        listing_picture_url_dir = self.picture_url_dir + f"/{city}/" + "picture_url"
+        listing_picture_url_dir = self.picture_url_dir
         print(f"Loading listing pictures from: {listing_picture_url_dir}")
         assert len(os.listdir(listing_picture_url_dir)) == n, "number of pictures in listing picture directory must match number of listings (len of df)"
 
@@ -306,4 +334,17 @@ class AddCustomFeatures:
     # Returns the data
     def return_data(self):
         return self.data
-    
+
+dataframe = pd.DataFrame()
+for city in ['berlin', "barcelona", "istanbul", "london", "oslo"]:
+#    data = f'/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed/{city}/single_city_listing.csv'
+#    data = pd.read_csv(data)
+#    additional_features = ['distance_to_city_center', 'spelling_errors', 'aesthetic_score', 'host_profile_analysis', 'listing_picture_analysis', 'average_review_length']
+#    data = AddCustomFeatures(data, additional_features, host_profile_picture_dir=f'/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed/images/{city}/host_picture_url', picture_url_dir=f'/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed/images/{city}/picture_url').return_data()
+#    data.to_csv(f'/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed/{city}/{city}_data.csv', index=False)#
+
+    city_folder = f'/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed/{city}'
+    data = pd.read_csv(f'{city_folder}/{city}_data.csv')
+    dataframe = pd.concat([dataframe, data], ignore_index=True)
+
+dataframe.to_csv(f'/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed/european_cities_data.csv', index=False)

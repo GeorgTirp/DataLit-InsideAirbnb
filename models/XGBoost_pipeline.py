@@ -14,7 +14,7 @@ from scipy.stats import pearsonr
 import numpy as np
 import matplotlib.pyplot as plt
 import re
-from add_custom_features import AddCustomFeatures
+#from add_custom_features import AddCustomFeatures
 import logging
 import os
 
@@ -126,8 +126,8 @@ def run_XGBoost_pipeline(data='', target='listing_price', features=[],
     data = data[data['price'] < 1000]
 
     # Add custom features
-    Feature_Adder = AddCustomFeatures(data, add_custom_features)
-    data = Feature_Adder.return_data()
+    #Feature_Adder = AddCustomFeatures(data, add_custom_features)
+    #data = Feature_Adder.return_data()
 
 
     # Extract the target variable
@@ -196,6 +196,8 @@ def run_XGBoost_pipeline(data='', target='listing_price', features=[],
     #    'max_depth': [5, 6, 7, 8, 9, 10],
     #    'subsample': [0.6, 0.8, 1.0],
     #    'colsample_bytree': [0.6, 0.8, 1.0]
+        'reg_alpha': [0, 0.1, 0.5],
+        'reg_lambda': [1, 1.5, 2]
     }
 
     # log_and_print the Hyperparamer grid
@@ -274,7 +276,7 @@ def run_XGBoost_pipeline(data='', target='listing_price', features=[],
         log_and_print(f'Mean SHAP values saved as {save_path}/{identifier}_mean_shap_values.npy')
 
     # Plot aggregated SHAP values (Feature impact)
-    shap.summary_plot(mean_shap_prices, features=X, feature_names=X.columns, show=False, max_display=40)
+    shap.summary_plot(mean_shap_prices, features=X, feature_names=X.columns, show=False)
     plt.title(f'{identifier} SHAP Summary Plot (Aggregated)', fontsize=16)
     if save_results:
         plt.subplots_adjust(top=0.90)
@@ -283,7 +285,7 @@ def run_XGBoost_pipeline(data='', target='listing_price', features=[],
 
 
     # Plot aggregated SHAP values as bar plot (Feature importance)
-    shap.summary_plot(mean_shap_prices, features=X, plot_type='bar', feature_names=X.columns, show=False, max_display=40)
+    shap.summary_plot(mean_shap_prices, features=X, plot_type='bar', feature_names=X.columns, show=False)
     plt.title(f'{identifier} SHAP Summary Plot (Aggregated)', fontsize=16)
     if save_results:
         plt.subplots_adjust(top=0.90)

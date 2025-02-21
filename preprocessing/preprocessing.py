@@ -17,6 +17,84 @@ import torchvision.transforms as transforms
 import torchvision.models as models
 from torchvision.models import ResNet50_Weights
 import logging
+import asyncio
+import aiohttp
+from concurrent.futures import ThreadPoolExecutor
+
+
+class ImageDownloader:
+    def __init__(self, cities, all_cities_listings):
+        self.cities = cities
+        self.all_cities_listings = all_cities_listings
+        self.image_size = (256, 256)
+
+    async def fetch_image(self, session, image_url):
+        """Asynchronously fetch an image from a URL"""
+        if isinstance(image_url, float):  # Handle NaN URLs
+            return None
+
+        try:
+            async with session.get(image_url, timeout=60) as response:
+                if response.status == 200:
+                    return await response.read()  # Return raw image bytes
+        except Exception as e:
+            logging.warning(f"Failed to download {image_url}: {e}")
+        return None
+
+    async def download_images_async(self, image_urls):
+        """Download images asynchronously"""
+        async with aiohttp.ClientSession() as session:
+            tasks = [self.fetch_image(session, url) for url in image_urls]
+            return await asyncio.gather(*tasks)  # Fetch all images in parallel
+
+    def process_and_save_image(self, img_bytes, image_path):
+        """Process and save an image"""
+        try:
+            if img_bytes is None:
+                img = Image.new("RGB", self.image_size)  # Placeholder image
+            else:
+                img = Image.open(BytesIO(img_bytes)).resize(self.image_size)
+                if img.mode != "RGB":
+                    img = img.convert("RGB")
+
+            img.save(image_path, "JPEG")
+            print(f"Saved image to {image_path}")
+        except Exception as e:
+            logging.warning(f"Error processing image {image_path}: {e}")
+
+    def download_images_and_save(self, 
+                                 image_url_col_names=['host_picture_url', 'picture_url'], 
+                                 saving_dir='kaggle/working/preprocessed_data/filtered_dataset_images', 
+                                 process_n_images=-1):
+        logging.info("Initializing image downloading process")
+
+        for city in self.cities:
+            for image_url_col_name in image_url_col_names:
+                logging.info(f"Downloading images from column '{image_url_col_name}' for city '{city}'")
+
+                city_listings = self.all_cities_listings[self.all_cities_listings["city"] == city]
+                image_urls = city_listings[image_url_col_name].tolist()
+
+                if process_n_images > 0:
+                    image_urls = image_urls[:process_n_images]  # Limit number of images
+
+                image_bytes_list = asyncio.run(self.download_images_async(image_urls))
+
+                image_saving_path = os.path.join(saving_dir, city, image_url_col_name)
+                os.makedirs(image_saving_path, exist_ok=True)
+
+                with ThreadPoolExecutor() as executor:
+                    print(f"Saving {len(image_bytes_list)} images for {city} - {image_url_col_name}")
+                    tasks = [
+                        executor.submit(self.process_and_save_image, img_bytes, 
+                                        os.path.join(image_saving_path, f"image_{i}.jpg"))
+                        for i, img_bytes in enumerate(image_bytes_list)
+                    ]
+                    for task in tqdm(tasks, desc=f"Processing {city} {image_url_col_name}"):
+                        task.result()  # Wait for all tasks to complete
+
+                logging.info(f"Finished downloading images for {city} - {image_url_col_name}")
+
 
 
 DEBUG_MODE = False
@@ -117,7 +195,7 @@ class InsideAirbnbDataset:
             logging.info(f"current city: {city}")
             city_listings = self.raw_data_dict[city]["listings.csv"]
             city_reviews = self.raw_data_dict[city]["reviews.csv"]       
-            city_calendar = self.raw_data_dict[city]["calendar.csv"] 
+            #city_calendar = self.raw_data_dict[city]["calendar.csv"] 
 
             city_listings_indices = city_listings.index.to_list()
             city_listings["comments"] = [[] for _ in range(len(city_listings))]
@@ -196,7 +274,8 @@ class InsideAirbnbDataset:
             lambda s: s.removesuffix('%') if type(s) == str else s, 
             na_action = 'ignore'
         )
-        median_value = all_cities_listings['host_response_rate'].median()
+        all_cities_listings['host_response_rate'] = all_cities_listings['host_response_rate'].str.rstrip('%').astype('float')
+        median_value = all_cities_listings['host_response_rate'].dropna().median()
         all_cities_listings['host_response_rate'].fillna(value=median_value, inplace=True)
 
         #  'host_acceptance_rate'  --> mean/median
@@ -204,19 +283,20 @@ class InsideAirbnbDataset:
             lambda s: s.removesuffix('%') if type(s) == str else s, 
             na_action = 'ignore'
         )
-        median_value = all_cities_listings['host_acceptance_rate'].median()
+        all_cities_listings['host_acceptance_rate'] = all_cities_listings['host_acceptance_rate'].str.rstrip('%').astype('float')
+        median_value = all_cities_listings['host_acceptance_rate'].dropna().median()
         all_cities_listings['host_acceptance_rate'].fillna(value=median_value, inplace=True)
 
         #  'bathrooms'        --> mean/median
-        median_value = all_cities_listings['bathrooms'].median()
+        median_value = all_cities_listings['bathrooms'].dropna().median()
         all_cities_listings['bathrooms'].fillna(value=median_value, inplace=True)
 
         #  'bedrooms'         --> mean/median
-        median_value = all_cities_listings['bedrooms'].median()
+        median_value = all_cities_listings['bedrooms'].dropna().median()
         all_cities_listings['bedrooms'].fillna(value=median_value, inplace=True)
 
         #  'beds'         --> mean/median
-        median_value = all_cities_listings['beds'].median()
+        median_value = all_cities_listings['beds'].dropna().median()
         all_cities_listings['beds'].fillna(value=median_value, inplace=True)
 
         #  'first_review'     --> leave out listings without reviews (only include listings which include reviews which indicates that listings are booked and price is valid)
@@ -233,14 +313,14 @@ class InsideAirbnbDataset:
                 'review_scores_value', 
                 'reviews_per_month'
             ]
-        if include_only_reviewed:
-            all_cities_listings = all_cities_listings[all_cities_listings['first_review'].notna()]
-            for review_col in review_columns:
-                assert not all_cities_listings[review_col].isna().any()
-        else:
-            # since I could not think of an sensible imputation strategy
-            all_cities_listings.drop(columns = review_columns)
-        
+        #if include_only_reviewed:
+        #    all_cities_listings = all_cities_listings[all_cities_listings['first_review'].notna()]
+        #    for review_col in review_columns:
+        #        assert not all_cities_listings[review_col].isna().any()
+        #else:
+        #    # since I could not think of an sensible imputation strategy
+        #    all_cities_listings.drop(columns = review_columns)
+        #
         #NLP NaN:
         #  'name'                   --> embedding of empty string ""
         #  'description'            --> embedding of empty string ""
@@ -359,50 +439,12 @@ class InsideAirbnbDataset:
                             saving_dir: str = 'kaggle/working/preprocessed_data/filtered_dataset_images',
                             process_n_images: int = -1) -> None:
         
-        logging.info("initializing image embedding process")
-        for city in self.cities:
-            for image_url_col_name in image_url_col_names:
-                logging.info(f"downloading images from web for column '{image_url_col_name}'")
-
-                city_listings = self.all_cities_listings[self.all_cities_listings["city"] == city]
-                image_url_col = city_listings[image_url_col_name]
-                image_list = []
-                no_access_indices = []
-                image_size = (256,256)
-                
-                for i, image_url in enumerate(tqdm(image_url_col)):
-                    if process_n_images >= 0 and i == process_n_images:
-                        break
-                    response = requests.get(image_url)
-                    
-                    # NaN values are floats
-                    if type(image_url) is float:
-                        no_access_indices.append(i)
-                        image_list.append(Image.new("RGB", image_size))
-                    else:
-                        response = requests.get(image_url)
-                        # code for successful request is 200
-                        if response.status_code == 200:
-                            try:
-                                image = Image.open(BytesIO(response.content)).resize(image_size)
-                                if image.mode != "RGB":
-                                    image = image.convert('RGB')
-                                image_list.append(image)
-                            except OSError as e:
-                                no_access_indices.append(i)
-                                image_list.append(Image.new("RGB", image_size))  
-                        else:
-                            no_access_indices.append(i)
-                            image_list.append(Image.new("RGB", image_size))
-                            #response.raise_for_status()
+        image_downloader = ImageDownloader(cities=self.cities, all_cities_listings=self.all_cities_listings)
+        image_downloader.download_images_and_save(
+                            image_url_col_names=image_url_col_names, 
+                            saving_dir=saving_dir, 
+                            process_n_images=process_n_images)
         
-                logging.info(f"pictures from rows {no_access_indices} could not be accessed")
-
-                image_saving_path = saving_dir + '/' + city + '/' + image_url_col_name
-                if not os.path.exists(image_saving_path):
-                    os.makedirs(image_saving_path)
-                for i, image in enumerate(image_list):
-                    image.save(image_saving_path + '/' + f"image_{i}.jpg")
                 
             
 
@@ -463,7 +505,7 @@ class InsideAirbnbDataset:
                                 if image.mode != "RGB":
                                     image = image.convert('RGB')
                                 image_list.append(image)
-                            except OSError as e:
+                            except Exception as e:
                                 no_access_indices.append(i)
                                 image_list.append(Image.new("RGB", image_size))  
                         else:
@@ -582,18 +624,20 @@ class InsideAirbnbDataset:
         
 
 def main() -> None:
-    data_set = InsideAirbnbDataset()
-    data_set.save_all_cities_listings_to_file('ignore_all_listings.csv')
-    data_set.add_nlp_embedding(nlp_col_names = ['name'])
-    data_set.dimensionality_reduction(col_names = ['name_emb'])
+    data_set = InsideAirbnbDataset(raw_data_dir= "/home/sn/pCloudDrive/AirBnB_Daten/European_Cities",
+            process_all_cities = False,
+            cities_to_process = ["barcelona", "istanbul", "london", "oslo"],
+            read_from_raw = True,
+            preprocessed_data_dir = '/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed')
+    #data_set.download_images_and_save(
+    #                        saving_dir =  '/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed/images',
+    #                        process_n_images = -1)
+    data_set.filter_listings_and_impute_nan()
+    data_set.save_all_cities_listings_to_file(saving_dir='/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed')
 
 
 if __name__ == "__main__":
-    if not DEBUG_MODE:
-        data_set = InsideAirbnbDataset()
-
-    else:
-        main()
+    main()
 
     
 
