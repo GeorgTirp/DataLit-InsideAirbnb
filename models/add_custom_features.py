@@ -307,7 +307,7 @@ class AddCustomFeatures:
         listing_picture_url_dir = self.picture_url_dir
         print(f"Loading listing pictures from: {listing_picture_url_dir}")
         dir_n = len(os.listdir(listing_picture_url_dir))
-        assert dir_n == n, f"number of pictures {dir_n} in directory {picture_url_dir}  must match number of listings {n}(len of df)"
+        assert dir_n == n, f"number of pictures {dir_n} in directory {listing_picture_url_dir}  must match number of listings {n}(len of df)"
 
         aesthetic_scores = []
         for i in tqdm(range(n)):
