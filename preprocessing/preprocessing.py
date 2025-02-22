@@ -20,6 +20,10 @@ import logging
 import asyncio
 import aiohttp
 from concurrent.futures import ThreadPoolExecutor
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
+import sys 
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from models.add_custom_features import AddCustomFeatures
 
 
 class ImageDownloader:
@@ -98,7 +102,6 @@ class ImageDownloader:
 
 
 DEBUG_MODE = False
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 
 class InsideAirbnbDataset:
     """
@@ -259,13 +262,13 @@ class InsideAirbnbDataset:
 
         #categorical NaN:
         #  'host_response_time' --> extra NaN category
-        all_cities_listings['host_response_time'].fillna(value='not available', inplace=True)
+        all_cities_listings.fillna({'host_response_time': 'not available'}, inplace=True)
     
         #  'host_is_superhost'  --> False
-        all_cities_listings['host_is_superhost'].fillna(value='f', inplace=True)
+        all_cities_listings.fillna({'host_is_superhost': 'f'}, inplace=True)
         
         #  'has_availability'   --> False
-        all_cities_listings['has_availability'].fillna(value='f', inplace=True)
+        all_cities_listings.fillna({'has_availability': 'f'}, inplace=True)
 
         
         #numerical NaN:
@@ -621,19 +624,50 @@ class InsideAirbnbDataset:
         all_cities_listings = pd.concat(all_cities_listings, ignore_index=True)
         logging.info("reading preprocessed cities from directoy done")
         return all_cities_listings
+    
+    def local_currency_to_usd_conversion(self):
+        """
+            Changes local currency to USD for specified cities in all_cities_listings dataframe
+        """
+        cities = self.cities
+        all_cities_listings = self.all_cities_listings
+
+        # every cities currency should be mapped to USD via removing USD sign from string and converting the number to float then multiplying by the exchange rate
+        # for 'berlin', "barcelona", "istanbul", "london", "oslo"
+        exchange_rates = {
+            "berlin": 1.05, # EUR -> USD
+            "barcelona": 1.05, # EUR -> USD
+            "istanbul": 0.026, # TRY -> USD
+            "london": 1.26, # GBP -> USD
+            "oslo": 0.09 # NOK -> USD
+        }
+
+        # price is stored in all_cities_listings["price"] as string with currency sign
+        for city in cities:
+            exchange_rate = exchange_rates[city]
+            all_cities_listings.loc[all_cities_listings["city"] == city, "price"] = all_cities_listings.loc[all_cities_listings["city"] == city, "price"].apply(lambda x: "$" + str(float(x[1:].replace(",", "")) * exchange_rate))
+        
+            
+
+
+
         
 
 def main() -> None:
-    data_set = InsideAirbnbDataset(raw_data_dir= "/home/sn/pCloudDrive/AirBnB_Daten/European_Cities",
+    data_set = InsideAirbnbDataset(raw_data_dir= "C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy",
             process_all_cities = False,
-            cities_to_process = ["barcelona", "istanbul", "london", "oslo"],
+            cities_to_process = ["oslo"],
             read_from_raw = True,
             preprocessed_data_dir = '/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed')
+    
+    data_set.local_currency_to_usd_conversion()
+
     #data_set.download_images_and_save(
-    #                        saving_dir =  '/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed/images',
+    #                        saving_dir =  'C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy/oslo',
     #                        process_n_images = -1)
-    data_set.filter_listings_and_impute_nan()
-    data_set.save_all_cities_listings_to_file(saving_dir='/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed')
+    #data_set.filter_listings_and_impute_nan()
+    #AddCustomFeatures(data = data_set.all_cities_listings, additional_features= ['listing_picture_analysis'])
+    #data_set.save_all_cities_listings_to_file(saving_dir='C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy/preprocessed_cities/oslo')
 
 
 if __name__ == "__main__":
