@@ -12,8 +12,8 @@ import torch
 
 #packages for calculating spelling errors
 import spacy
-from textblob import TextBlob 
 from bs4 import BeautifulSoup  
+from spellchecker import SpellChecker
 
 #packages for calculating aesthetic scores
 import requests
@@ -39,11 +39,15 @@ class AddCustomFeatures:
             data: pd.DataFrame, 
             additional_features: list, 
             host_profile_picture_dir: str = "C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy/oslo/host_picture_url",
-            picture_url_dir: str = "C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy/oslo/picture_url"):
+            picture_url_dir: str = "C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy/oslo/picture_url",
+            addtional_dict_dir: str = "/Users/mathis.nommensen/DL_InsideAirbnb/words.txt"):
         self.data = data
         self.features = []
         self.host_profile_picture_dir = host_profile_picture_dir
         self.picture_url_dir = picture_url_dir
+
+        self.additional_dict_dir = addtional_dict_dir
+        
 
         # Add centrality feature:
         if 'distance_to_city_center' in additional_features:
@@ -71,6 +75,8 @@ class AddCustomFeatures:
             try:
                 print("Adding spelling evaluation...")
                 self.nlp = spacy.load("en_core_web_sm")
+                self.spell = SpellChecker(language="en")
+                self.load_custom_dictionary()
                 self.add_spelling_evaluation()
             except Exception as e:
                 print(f"Error adding spelling evaluation: {e}")
@@ -142,39 +148,54 @@ class AddCustomFeatures:
         pandarallel.initialize(progress_bar=True)
         self.data['average_review_length'] = self.data['comments'].parallel_apply(calculate_review_length)
 
-    def calculate_spelling_errors(self, description):
+    def load_custom_dictionary(self):
+        try:
+            self.spell.word_frequency.load_text_file(self.additional_dict_dir)
+            print("Loaded custom dictionary successfully.")
+        except FileNotFoundError:
+            print("Dictionary file not found! Ensure 'words.txt' is in the same directory.")
+
+        self.spell.word_frequency.add("bluetooth")
+        self.spell.word_frequency.add("wifi")
+
+    def calculate_spelling_errors(self, listing_id, description):
         
-        #ignore list - current method to ignore ordinal numbers (from 1st to 1000th)
+        # ignore list - current method to ignore ordinal numbers (from 1st to 1000th)
         ignore = [f"{i}{'st' if i % 10 == 1 and i % 100 != 11 else 'nd' if i % 10 == 2 and i % 100 != 12 else 'rd' if i % 10 == 3 and i % 100 != 13 else 'th'}" for i in range(1, 1001)]
 
         if pd.isna(description) or description == "": #check if description is empty (NaN values are already preprocessed but just in case)
+                print(f"Listing {listing_id} has no description")
                 return np.nan
         
         # remove html tags from description
-        clean_description = BeautifulSoup(description, "html.parser").get_text()
+        clean_description = BeautifulSoup(description, "html.parser").get_text()        
+        
+        # length of the description in words (including GPE and LOC entities and words from the ignore list but without the html tags)
+        total_words = len([token.text for token in self.nlp(clean_description)])
+        if total_words <= 0:
+            print(f"Listing {listing_id} has faulty description")
+            return np.nan  # Avoid division by zero
         
         nlp_description = self.nlp(clean_description)
-        spelling_errors = 0
-
-        # check description word for word 
-        for token in nlp_description: 
-
-            # makes sure to not flag GPE = geopolitical entity, LOC = location as spelling errors
-            word = token.text
-            if token.ent_type_ in ["GPE", "LOC"] or word in ignore: 
-                continue
-            
-            # check for possible spelling errors
-            corrected = TextBlob(word).correct() 
-            if word.lower() != corrected.lower(): 
-                spelling_errors += 1
-            
-        return spelling_errors / len(TextBlob(clean_description).words) #return ratio of spelling errors to total words
         
+        # words to be checked must not be GPE or LOC entities, must not appear in ignore list and must be alphabetic at the same time
+        words = [token.text for token in nlp_description 
+                 if token.ent_type_ not in ["GPE", "LOC"] 
+                 and token.text not in ignore 
+                 and token.is_alpha] 
+        
+        misspelled = self.spell.unknown(words)
+        spelling_errors = len(misspelled)
+
+        #print(listing_id, spelling_errors, misspelled)
+        # return ratio of spelling errors to total words (including GPE and LOC entities and words from the ignore list)  
+        return round(spelling_errors / total_words, 2) if total_words > 0 else np.nan #return ratio of spelling errors to total words if total words > 0
 
     def add_spelling_evaluation(self):
         pandarallel.initialize(progress_bar=True)
-        self.data['spelling_errors'] = self.data['description'].parallel_apply(lambda x: self.calculate_spelling_errors(x))
+        self.data["spelling_errors"] = self.data.parallel_apply(
+            lambda row: self.calculate_spelling_errors(row["id"], row["description"]), axis=1
+        )
     
     def add_host_profile_analysis(self):
 
