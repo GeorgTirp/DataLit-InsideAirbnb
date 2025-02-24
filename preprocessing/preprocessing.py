@@ -22,8 +22,8 @@ import aiohttp
 from concurrent.futures import ThreadPoolExecutor
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 import sys 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from models.add_custom_features import AddCustomFeatures
+#sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+#from models.add_custom_features import AddCustomFeatures
 
 
 class ImageDownloader:
@@ -639,7 +639,8 @@ class InsideAirbnbDataset:
             "barcelona": 1.05, # EUR -> USD
             "istanbul": 0.026, # TRY -> USD
             "london": 1.26, # GBP -> USD
-            "oslo": 0.09 # NOK -> USD
+            "oslo": 0.09, # NOK -> USD
+            "los_angeles": 1.0 # USD -> USD
         }
 
         # price is stored in all_cities_listings["price"] as string with currency sign
@@ -654,20 +655,22 @@ class InsideAirbnbDataset:
         
 
 def main() -> None:
-    data_set = InsideAirbnbDataset(raw_data_dir= "C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy",
+    data_set = InsideAirbnbDataset(raw_data_dir= "/home/sn/pCloudDrive/AirBnB_Daten/European_Cities",
             process_all_cities = False,
-            cities_to_process = ["oslo"],
+            cities_to_process = ["oslo", "barcelona", "berlin", "london", "istanbul", "los_angeles"],
             read_from_raw = True,
             preprocessed_data_dir = '/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed')
     
     data_set.local_currency_to_usd_conversion()
+    data_set.filter_listings_and_impute_nan()
+    
 
     #data_set.download_images_and_save(
-    #                        saving_dir =  'C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy/oslo',
+    #                        saving_dir = '/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed/images',
     #                        process_n_images = -1)
-    #data_set.filter_listings_and_impute_nan()
-    #AddCustomFeatures(data = data_set.all_cities_listings, additional_features= ['listing_picture_analysis'])
-    #data_set.save_all_cities_listings_to_file(saving_dir='C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy/preprocessed_cities/oslo')
+    #additional_features = ['host_picture_analysis', 'listing_picture_analysis', 'distance_to_city_center', 'average_review_length', 'review_sentiment', 'spelling_errors', 'aesthetic_score', ]
+    #AddCustomFeatures(data = data_set.all_cities_listings, additional_features= additional_features)
+    data_set.save_all_cities_listings_to_file(saving_dir='/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed')
 
 
 if __name__ == "__main__":
