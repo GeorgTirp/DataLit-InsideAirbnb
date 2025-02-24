@@ -169,13 +169,12 @@ class AddCustomFeatures:
         self.spell.word_frequency.add("bluetooth")
         self.spell.word_frequency.add("wifi")
 
-    def calculate_spelling_errors(self, listing_id, description):
+    def calculate_spelling_errors(self, description):
         
         # ignore list - current method to ignore ordinal numbers (from 1st to 1000th)
         ignore = [f"{i}{'st' if i % 10 == 1 and i % 100 != 11 else 'nd' if i % 10 == 2 and i % 100 != 12 else 'rd' if i % 10 == 3 and i % 100 != 13 else 'th'}" for i in range(1, 1001)]
 
         if pd.isna(description) or description == "": #check if description is empty (NaN values are already preprocessed but just in case)
-                print(f"Listing {listing_id} has no description")
                 return np.nan
         
         # remove html tags from description
@@ -184,7 +183,6 @@ class AddCustomFeatures:
         # length of the description in words (including GPE and LOC entities and words from the ignore list but without the html tags)
         total_words = len([token.text for token in self.nlp(clean_description)])
         if total_words <= 0:
-            print(f"Listing {listing_id} has faulty description")
             return np.nan  # Avoid division by zero
         
         nlp_description = self.nlp(clean_description)
@@ -198,15 +196,17 @@ class AddCustomFeatures:
         misspelled = self.spell.unknown(words)
         spelling_errors = len(misspelled)
 
-        #print(listing_id, spelling_errors, misspelled)
         # return ratio of spelling errors to total words (including GPE and LOC entities and words from the ignore list)  
         return round(spelling_errors / total_words, 2) if total_words > 0 else np.nan #return ratio of spelling errors to total words if total words > 0
 
     def add_spelling_evaluation(self):
-        pandarallel.initialize(progress_bar=True)
-        self.data["spelling_errors"] = self.data.parallel_apply(
-            lambda row: self.calculate_spelling_errors(row["id"], row["description"]), axis=1
-        )
+        #pandarallel.initialize(progress_bar=True)
+        self.data["spelling_errors"] = self.data["description"].apply(self.calculate_spelling_errors)
+
+        # mean imputing
+        mean_spelling_error = self.data["spelling_errors"].mean(skipna=True)
+        self.data["spelling_errors"] = self.data["spelling_errors"].fillna(mean_spelling_error)
+        print(f"Mean spelling errors imputed: {mean_spelling_error:.2f}")
     
     def add_host_profile_analysis(self):
 
@@ -346,24 +346,33 @@ class AddCustomFeatures:
 
             # load listing picture from directory + preprocessing
             image_path = listing_picture_url_dir +  f"/image_{i}.jpg"
-            img = Image.open(image_path).resize((224, 224), Image.LANCZOS)
-            img = img.convert('RGB')
-            img_array = tf.keras.preprocessing.image.img_to_array(img)
-            img_array = np.expand_dims(img_array, axis=0)
-            img_array_preprocessed = preprocess_input(img_array)
+            try:
+                img = Image.open(image_path).resize((224, 224), Image.LANCZOS)
+                img = img.convert('RGB')
+                img_array = tf.keras.preprocessing.image.img_to_array(img)
+                img_array = np.expand_dims(img_array, axis=0)
+                img_array_preprocessed = preprocess_input(img_array)
 
-            # model predictions
-            predictions = self.aesthetic_model.predict(img_array_preprocessed)[0]
+                # model predictions
+                predictions = self.aesthetic_model.predict(img_array_preprocessed)[0]
 
-            # compute aesthetic score and standard deviation
-            aesthetic_score = np.sum(predictions * np.arange(1, 11))
-            variance = np.sum(predictions * (np.arange(1, 11) - aesthetic_score)**2)
-            standard_deviation = np.sqrt(variance)
-            print(f"Listing {i} → Aesthetic Score: {aesthetic_score:.2f} ± {standard_deviation:.2f}")
+                # compute aesthetic score and standard deviation
+                aesthetic_score = np.sum(predictions * np.arange(1, 11))
+                variance = np.sum(predictions * (np.arange(1, 11) - aesthetic_score)**2)
+                standard_deviation = np.sqrt(variance)
+                print(f"Listing {i} → Aesthetic Score: {aesthetic_score:.2f} ± {standard_deviation:.2f}")
             
-            aesthetic_scores.append(max(1.0, min(10.0, aesthetic_score)))
+                aesthetic_scores.append(max(1.0, min(10.0, aesthetic_score)))
+            except Exception as e:
+                print(f"Error processing image {image_path}: {e}. Now assign NaN.")
+                aesthetic_score.append(np.nan)
             
         self.data['aesthetic_score'] = aesthetic_scores    
+
+        # mean imputing
+        mean_aesthetic_score = self.data['aesthetic_score'].mean(skipna=True)
+        self.data['aesthetic_score'] = self.data['aesthetic_score'].fillna(mean_aesthetic_score)
+        print(f"Mean aesthetic score imputed: {mean_aesthetic_score:.2f}")
 
 
     # Returns the data
