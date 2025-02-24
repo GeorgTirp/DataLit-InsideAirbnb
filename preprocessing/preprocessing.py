@@ -23,7 +23,7 @@ from concurrent.futures import ThreadPoolExecutor
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 import sys 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from models.add_custom_features import AddCustomFeatures
+#from models.add_custom_features import AddCustomFeatures
 
 
 class ImageDownloader:
@@ -646,6 +646,26 @@ class InsideAirbnbDataset:
         for city in cities:
             exchange_rate = exchange_rates[city]
             all_cities_listings.loc[all_cities_listings["city"] == city, "price"] = all_cities_listings.loc[all_cities_listings["city"] == city, "price"].apply(lambda x: "$" + str(float(x[1:].replace(",", "")) * exchange_rate))
+
+        self.all_cities_listings = all_cities_listings
+        logging.info("local currency to USD conversion done")
+
+    def categorical_to_one_hot_encoding(self,
+                                        include_city_column: bool = True) -> None:
+        
+        binary_columns = ['host_is_superhost', 'host_has_profile_pic', 'host_identity_verified', 'has_availability', 'instant_bookable']
+        categorical_columns = ['host_response_time', 'neighbourhood_cleansed', 'property_type', 'room_type']
+
+        if include_city_column:
+            categorical_columns.append('city')
+
+        all_cities_listings = self.all_cities_listings
+
+        all_cities_listings = pd.get_dummies(all_cities_listings, columns=binary_columns, drop_first= True)
+        all_cities_listings = pd.get_dummies(all_cities_listings, columns=categorical_columns, drop_first=False)
+
+        self.all_cities_listings = all_cities_listings
+        logging.info("one hot encoding done")
         
             
 
@@ -660,7 +680,7 @@ def main() -> None:
             read_from_raw = True,
             preprocessed_data_dir = '/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed')
     
-    data_set.local_currency_to_usd_conversion()
+    data_set.categorical_to_one_hot_encoding(include_city_column= False)
 
     #data_set.download_images_and_save(
     #                        saving_dir =  'C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy/oslo',
