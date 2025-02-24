@@ -168,7 +168,7 @@ class AddCustomFeatures:
                 return np.nan
         
         # remove html tags from description
-        clean_description = BeautifulSoup(description, "html.parser").get_text()        
+        clean_description = BeautifulSoup(str(description), "html.parser").get_text()        
         
         # length of the description in words (including GPE and LOC entities and words from the ignore list but without the html tags)
         total_words = len([token.text for token in self.nlp(clean_description)])
