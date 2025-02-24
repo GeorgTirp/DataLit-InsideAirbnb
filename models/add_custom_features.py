@@ -169,13 +169,12 @@ class AddCustomFeatures:
         self.spell.word_frequency.add("bluetooth")
         self.spell.word_frequency.add("wifi")
 
-    def calculate_spelling_errors(self, listing_id, description):
+    def calculate_spelling_errors(self, description):
         
         # ignore list - current method to ignore ordinal numbers (from 1st to 1000th)
         ignore = [f"{i}{'st' if i % 10 == 1 and i % 100 != 11 else 'nd' if i % 10 == 2 and i % 100 != 12 else 'rd' if i % 10 == 3 and i % 100 != 13 else 'th'}" for i in range(1, 1001)]
 
         if pd.isna(description) or description == "": #check if description is empty (NaN values are already preprocessed but just in case)
-                print(f"Listing {listing_id} has no description")
                 return np.nan
         
         # remove html tags from description
@@ -184,7 +183,6 @@ class AddCustomFeatures:
         # length of the description in words (including GPE and LOC entities and words from the ignore list but without the html tags)
         total_words = len([token.text for token in self.nlp(clean_description)])
         if total_words <= 0:
-            print(f"Listing {listing_id} has faulty description")
             return np.nan  # Avoid division by zero
         
         nlp_description = self.nlp(clean_description)
@@ -198,15 +196,16 @@ class AddCustomFeatures:
         misspelled = self.spell.unknown(words)
         spelling_errors = len(misspelled)
 
-        #print(listing_id, spelling_errors, misspelled)
         # return ratio of spelling errors to total words (including GPE and LOC entities and words from the ignore list)  
         return round(spelling_errors / total_words, 2) if total_words > 0 else np.nan #return ratio of spelling errors to total words if total words > 0
 
     def add_spelling_evaluation(self):
-        pandarallel.initialize(progress_bar=True)
-        self.data["spelling_errors"] = self.data.parallel_apply(
-            lambda row: self.calculate_spelling_errors(row["id"], row["description"]), axis=1
-        )
+        #pandarallel.initialize(progress_bar=True)
+        self.data["spelling_errors"] = self.data["description"].apply(self.calculate_spelling_errors)
+
+        # mean imputing
+        mean_spelling_error = self.data["spelling_errors"].mean(skipna=True)
+        self.data["spelling_errors"] = self.data["spelling_errors"].fillna(mean_spelling_error)
     
     def add_host_profile_analysis(self):
 
