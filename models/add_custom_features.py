@@ -25,6 +25,9 @@ from tensorflow.keras.applications import MobileNet
 from tensorflow.keras.models import Model
 from tensorflow.keras.preprocessing import image  # Needed for image loading and preprocessing
 
+#packages for calaculating the review sentiment
+from textblob import TextBlob
+
 
 
 print(tf.__version__)
@@ -40,7 +43,7 @@ class AddCustomFeatures:
             additional_features: list, 
             host_profile_picture_dir: str = "C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy/oslo/host_picture_url",
             picture_url_dir: str = "C:/Users/nilsk/Dokumente/Machine Learning (MSc.)/1. Semester/Data Literacy/oslo/picture_url",
-            addtional_dict_dir: str = "/Users/mathis.nommensen/DL_InsideAirbnb/words.txt"):
+            addtional_dict_dir: str = "/media/sn/Frieder_Data/Master_Machine_Learning/DataLit-InsideAirbnb/models/words.txt"):
         self.data = data
         self.features = []
         self.host_profile_picture_dir = host_profile_picture_dir
@@ -52,6 +55,7 @@ class AddCustomFeatures:
         # Add centrality feature:
         if 'distance_to_city_center' in additional_features:
             try:
+                print("-----------------------------------")
                 print("Calculating centrality...")
                 self.calculate_centrality()
             except Exception as e:
@@ -59,6 +63,7 @@ class AddCustomFeatures:
 
         if 'review_sentiment' in additional_features:
             try:
+                print('-----------------------------------')
                 print("Adding review sentiment...")
                 self.add_review_sentiment()
             except Exception as e:
@@ -66,6 +71,7 @@ class AddCustomFeatures:
 
         if 'average_review_length' in additional_features:
             try:
+                print("-----------------------------------")
                 print("Adding review length...")
                 self.add_review_length()
             except Exception as e:
@@ -73,6 +79,7 @@ class AddCustomFeatures:
 
         if 'spelling_errors' in additional_features:
             try:
+                print("-----------------------------------")
                 print("Adding spelling evaluation...")
                 self.nlp = spacy.load("en_core_web_sm")
                 self.spell = SpellChecker(language="en")
@@ -83,6 +90,7 @@ class AddCustomFeatures:
         
         if 'host_profile_analysis' in additional_features:
             try:
+                print("-----------------------------------")
                 print("Adding host profile analysis...")
                 self.add_host_profile_analysis()
             except Exception as e:
@@ -90,6 +98,7 @@ class AddCustomFeatures:
         
         if 'aesthetic_score' in additional_features:
             try:
+                print("-----------------------------------")
                 print("Adding aesthetic score...")
                 self.load_pretrained_nima()
                 self.add_aesthetic_score()
@@ -98,6 +107,7 @@ class AddCustomFeatures:
 
         if 'listing_picture_analysis' in additional_features:
             try:
+                print("-----------------------------------")
                 print("Adding listing picture analysis...")
                 self.add_listing_picture_analysis()
             except Exception as e:
@@ -132,11 +142,12 @@ class AddCustomFeatures:
 
     # Function to compute sentiment for a list of reviews (compound score)
     def analyze_sentiment(self, text):
-        analyzer = SentimentIntensityAnalyzer()
-        if not text:  # Handle empty list case
-            return 0.0  
-        scores = [analyzer.polarity_scores(text)['compound'] for text in text]
-        return sum(scores) / len(scores)  # Calculate average
+        sentiment_scores = []
+        for review in text:
+            sentiment_scores.append(TextBlob(review).sentiment.polarity)
+        if len(sentiment_scores) == 0:
+            return 0
+        return np.mean(sentiment_scores)
     
     
     def add_review_length(self):
@@ -360,19 +371,20 @@ class AddCustomFeatures:
         return self.data
 
 def main():
-    dataframe = pd.DataFrame()
-    for city in ['berlin', "barcelona", "istanbul", "london", "oslo"]:
-    #    data = f'/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed/{city}/single_city_listing.csv'
-    #    data = pd.read_csv(data)
-    #    additional_features = ['distance_to_city_center', 'spelling_errors', 'aesthetic_score', 'host_profile_analysis', 'listing_picture_analysis', 'average_review_length']
-    #    data = AddCustomFeatures(data, additional_features, host_profile_picture_dir=f'/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed/images/{city}/host_picture_url', picture_url_dir=f'/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed/images/{city}/picture_url').return_data()
-    #    data.to_csv(f'/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed/{city}/{city}_data.csv', index=False)#
+    #dataframe = pd.DataFrame()
+    for city in ['berlin', "barcelona", "istanbul", "london", "oslo", "los_angeles"]:
+        data = f'/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed/{city}/single_city_listing.csv'
+        data = pd.read_csv(data)
+        #additional_features = ['distance_to_city_center', 'spelling_errors', 'aesthetic_score', 'host_profile_analysis', 'listing_picture_analysis', 'average_review_length']
+        additional_features = ['aesthetic_score']
+        data = AddCustomFeatures(data, additional_features, host_profile_picture_dir=f'/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed/images/{city}/host_picture_url', picture_url_dir=f'/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed/images/{city}/picture_url').return_data()
+        data.to_csv(f'/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed/{city}/{city}_data.csv', index=False)#
 
-        city_folder = f'/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed/{city}'
-        data = pd.read_csv(f'{city_folder}/{city}_data.csv')
-        dataframe = pd.concat([dataframe, data], ignore_index=True)
+        #city_folder = f'/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed/{city}'
+        #data = pd.read_csv(f'{city_folder}/{city}_data.csv')
+        #dataframe = pd.concat([dataframe, data], ignore_index=True)
 
-    dataframe.to_csv(f'/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed/european_cities_data.csv', index=False)
+    #dataframe.to_csv(f'/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed/european_cities_data.csv', index=False)
 
 
 if __name__ == "__main__":
