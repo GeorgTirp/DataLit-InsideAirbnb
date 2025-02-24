@@ -206,6 +206,7 @@ class AddCustomFeatures:
         # mean imputing
         mean_spelling_error = self.data["spelling_errors"].mean(skipna=True)
         self.data["spelling_errors"] = self.data["spelling_errors"].fillna(mean_spelling_error)
+        print(f"Mean spelling errors imputed: {mean_spelling_error:.2f}")
     
     def add_host_profile_analysis(self):
 
@@ -345,24 +346,33 @@ class AddCustomFeatures:
 
             # load listing picture from directory + preprocessing
             image_path = listing_picture_url_dir +  f"/image_{i}.jpg"
-            img = Image.open(image_path).resize((224, 224), Image.LANCZOS)
-            img = img.convert('RGB')
-            img_array = tf.keras.preprocessing.image.img_to_array(img)
-            img_array = np.expand_dims(img_array, axis=0)
-            img_array_preprocessed = preprocess_input(img_array)
+            try:
+                img = Image.open(image_path).resize((224, 224), Image.LANCZOS)
+                img = img.convert('RGB')
+                img_array = tf.keras.preprocessing.image.img_to_array(img)
+                img_array = np.expand_dims(img_array, axis=0)
+                img_array_preprocessed = preprocess_input(img_array)
 
-            # model predictions
-            predictions = self.aesthetic_model.predict(img_array_preprocessed)[0]
+                # model predictions
+                predictions = self.aesthetic_model.predict(img_array_preprocessed)[0]
 
-            # compute aesthetic score and standard deviation
-            aesthetic_score = np.sum(predictions * np.arange(1, 11))
-            variance = np.sum(predictions * (np.arange(1, 11) - aesthetic_score)**2)
-            standard_deviation = np.sqrt(variance)
-            print(f"Listing {i} → Aesthetic Score: {aesthetic_score:.2f} ± {standard_deviation:.2f}")
+                # compute aesthetic score and standard deviation
+                aesthetic_score = np.sum(predictions * np.arange(1, 11))
+                variance = np.sum(predictions * (np.arange(1, 11) - aesthetic_score)**2)
+                standard_deviation = np.sqrt(variance)
+                print(f"Listing {i} → Aesthetic Score: {aesthetic_score:.2f} ± {standard_deviation:.2f}")
             
-            aesthetic_scores.append(max(1.0, min(10.0, aesthetic_score)))
+                aesthetic_scores.append(max(1.0, min(10.0, aesthetic_score)))
+            except Exception as e:
+                print(f"Error processing image {image_path}: {e}. Now assign NaN.")
+                aesthetic_score.append(np.nan)
             
         self.data['aesthetic_score'] = aesthetic_scores    
+
+        # mean imputing
+        mean_aesthetic_score = self.data['aesthetic_score'].mean(skipna=True)
+        self.data['aesthetic_score'] = self.data['aesthetic_score'].fillna(mean_aesthetic_score)
+        print(f"Mean aesthetic score imputed: {mean_aesthetic_score:.2f}")
 
 
     # Returns the data
