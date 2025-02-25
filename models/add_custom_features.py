@@ -20,7 +20,7 @@ import requests
 from io import BytesIO
 import tensorflow as tf
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
-from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+from tensorflow.keras.applications.mobilenet import preprocess_input
 from tensorflow.keras.applications import MobileNet
 from tensorflow.keras.models import Model
 from tensorflow.keras.preprocessing import image  # Needed for image loading and preprocessing
