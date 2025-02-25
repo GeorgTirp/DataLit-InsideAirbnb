@@ -345,9 +345,11 @@ class AddCustomFeatures:
         for i in tqdm(range(n)):
 
             # load listing picture from directory + preprocessing
-            image_path = listing_picture_url_dir +  f"/image_{i}.jpg"
+            image_path = os.path.join(self.picture_url_dir, f"image_{i}.jpg")
             try:
-                img = Image.open(image_path).resize((224, 224), Image.LANCZOS)
+                img = Image.open(image_path).resize((224, 224), Image.LANCZOS) # get image
+
+                # preprocess image
                 img = img.convert('RGB')
                 img_array = tf.keras.preprocessing.image.img_to_array(img)
                 img_array = np.expand_dims(img_array, axis=0)
