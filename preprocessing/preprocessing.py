@@ -22,15 +22,19 @@ import aiohttp
 from concurrent.futures import ThreadPoolExecutor
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 import sys 
+import gc
+import asyncio
+import aiohttp
 #sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 #from models.add_custom_features import AddCustomFeatures
 
 
 class ImageDownloader:
-    def __init__(self, cities, all_cities_listings):
+    def __init__(self, cities, all_cities_listings, batch_size=500):
         self.cities = cities
         self.all_cities_listings = all_cities_listings
         self.image_size = (256, 256)
+        self.batch_size = batch_size  # Process images in batches
 
     async def fetch_image(self, session, image_url):
         """Asynchronously fetch an image from a URL"""
@@ -38,7 +42,7 @@ class ImageDownloader:
             return None
 
         try:
-            async with session.get(image_url, timeout=60) as response:
+            async with session.get(image_url, timeout=120) as response:
                 if response.status == 200:
                     return await response.read()  # Return raw image bytes
         except Exception as e:
@@ -46,7 +50,7 @@ class ImageDownloader:
         return None
 
     async def download_images_async(self, image_urls):
-        """Download images asynchronously"""
+        """Download images asynchronously in batches"""
         async with aiohttp.ClientSession() as session:
             tasks = [self.fetch_image(session, url) for url in image_urls]
             return await asyncio.gather(*tasks)  # Fetch all images in parallel
@@ -62,7 +66,6 @@ class ImageDownloader:
                     img = img.convert("RGB")
 
             img.save(image_path, "JPEG")
-            print(f"Saved image to {image_path}")
         except Exception as e:
             logging.warning(f"Error processing image {image_path}: {e}")
 
@@ -82,20 +85,29 @@ class ImageDownloader:
                 if process_n_images > 0:
                     image_urls = image_urls[:process_n_images]  # Limit number of images
 
-                image_bytes_list = asyncio.run(self.download_images_async(image_urls))
-
                 image_saving_path = os.path.join(saving_dir, city, image_url_col_name)
                 os.makedirs(image_saving_path, exist_ok=True)
 
-                with ThreadPoolExecutor() as executor:
-                    print(f"Saving {len(image_bytes_list)} images for {city} - {image_url_col_name}")
-                    tasks = [
-                        executor.submit(self.process_and_save_image, img_bytes, 
-                                        os.path.join(image_saving_path, f"image_{i}.jpg"))
-                        for i, img_bytes in enumerate(image_bytes_list)
-                    ]
-                    for task in tqdm(tasks, desc=f"Processing {city} {image_url_col_name}"):
-                        task.result()  # Wait for all tasks to complete
+                # Process images in batches
+                for batch_start in range(0, len(image_urls), self.batch_size):
+                    batch_urls = image_urls[batch_start: batch_start + self.batch_size]
+                    
+                    logging.info(f"Processing batch {batch_start // self.batch_size + 1}, size: {len(batch_urls)}")
+
+                    image_bytes_list = asyncio.run(self.download_images_async(batch_urls))
+
+                    with ThreadPoolExecutor() as executor:
+                        tasks = [
+                            executor.submit(self.process_and_save_image, img_bytes, 
+                                            os.path.join(image_saving_path, f"image_{batch_start + i}.jpg"))
+                            for i, img_bytes in enumerate(image_bytes_list)
+                        ]
+                        for task in tqdm(tasks, desc=f"Processing batch {batch_start // self.batch_size + 1}"):
+                            task.result()  # Wait for all tasks to complete
+
+                    # Free up memory after each batch
+                    del image_bytes_list
+                    gc.collect()
 
                 logging.info(f"Finished downloading images for {city} - {image_url_col_name}")
 
@@ -675,23 +687,29 @@ class InsideAirbnbDataset:
         
 
 def main() -> None:
-    data_set = InsideAirbnbDataset(raw_data_dir= "/home/sn/pCloudDrive/AirBnB_Daten/European_Cities",
+    data_set = InsideAirbnbDataset(raw_data_dir= "/media/sn/Frieder_Data/Master_Machine_Learning/data",
             process_all_cities = False,
             cities_to_process = ["oslo", "barcelona", "berlin", "london", "istanbul", "los_angeles"],
             read_from_raw = True,
+<<<<<<< HEAD
             preprocessed_data_dir = '/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed')
     
+=======
+            preprocessed_data_dir = '/media/sn/Frieder_Data/Master_Machine_Learning/data_preprocessed')
+
+    data_set.local_currency_to_usd_conversion()
+>>>>>>> 2d37061 (Final version of the preprocessing)
     data_set.filter_listings_and_impute_nan()
     data_set.categorical_to_one_hot_encoding(include_city_column= True)
     data_set.local_currency_to_usd_conversion()
     
 
-    #data_set.download_images_and_save(
-    #                        saving_dir = '/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed/images',
-    #                        process_n_images = -1)
+    data_set.download_images_and_save(
+                            saving_dir = '/media/sn/Frieder_Data/Master_Machine_Learning/images',
+                            process_n_images = -1)
     #additional_features = ['host_picture_analysis', 'listing_picture_analysis', 'distance_to_city_center', 'average_review_length', 'review_sentiment', 'spelling_errors', 'aesthetic_score', ]
     #AddCustomFeatures(data = data_set.all_cities_listings, additional_features= additional_features)
-    data_set.save_all_cities_listings_to_file(saving_dir='/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed')
+    data_set.save_all_cities_listings_to_file(saving_dir='/media/sn/Frieder_Data/Master_Machine_Learning/data_preprocessed')
 
 
 if __name__ == "__main__":
