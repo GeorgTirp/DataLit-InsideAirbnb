@@ -691,14 +691,9 @@ def main() -> None:
             process_all_cities = False,
             cities_to_process = ["oslo", "barcelona", "berlin", "london", "istanbul", "los_angeles"],
             read_from_raw = True,
-<<<<<<< HEAD
-            preprocessed_data_dir = '/home/sn/pCloudDrive/AirBnB_Daten/European_Cities/European_Cities_Preprocessed')
-    
-=======
             preprocessed_data_dir = '/media/sn/Frieder_Data/Master_Machine_Learning/data_preprocessed')
 
     data_set.local_currency_to_usd_conversion()
->>>>>>> 2d37061 (Final version of the preprocessing)
     data_set.filter_listings_and_impute_nan()
     data_set.categorical_to_one_hot_encoding(include_city_column= True)
     data_set.local_currency_to_usd_conversion()

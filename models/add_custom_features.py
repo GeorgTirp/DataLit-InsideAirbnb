@@ -159,7 +159,7 @@ class AddCustomFeatures:
         self.spell.word_frequency.add("bluetooth")
         self.spell.word_frequency.add("wifi")
 
-    def calculate_spelling_errors(self, description):
+
     def calculate_spelling_errors(self, description):
         
         # ignore list - current method to ignore ordinal numbers (from 1st to 1000th)
