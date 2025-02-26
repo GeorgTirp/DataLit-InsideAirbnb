@@ -9,4 +9,7 @@ Data
 Full Preprocessed Data
 ----------------------
 
-<iframe src="_static/european_cities_report.html" width="100%" height="600px"></iframe>
+
+.. raw:: html
+
+   <iframe src="_static/european_cities_report.html" width="100%" height="600px"></iframe>
