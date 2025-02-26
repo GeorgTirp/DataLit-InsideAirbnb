@@ -13,7 +13,6 @@ import os
 import shap
 import logging
 from tqdm import tqdm
-from add_custom_features import AddCustomFeatures
 import shap
 import logging
 from tqdm import tqdm
@@ -56,10 +55,14 @@ class BaseRegressionModel:
         X = X.apply(pd.to_numeric, errors='coerce')
         if y.dtype == object:
             y = y.replace('[\$,]', '', regex=True).astype(float)
-        logging.info("Finished model-specific preprocessing.")
+        # Keep only rows where y <= 10000
+        mask = y <= 10000
+        X, y = X[mask], y[mask]
+        
         # Z-score normalization for numerical features
         numerical_features = X.select_dtypes(include=[np.number]).columns
         X[numerical_features] = X[numerical_features].apply(stats.zscore)
+        logging.info("Finished model-specific preprocessing.")
         return X, y
 
     def predict(self, X: pd.DataFrame, y: pd.DataFrame = None, save_results=False) -> np.ndarray:
@@ -76,7 +79,7 @@ class BaseRegressionModel:
         logging.info("Finished prediction.")
         return pred
 
-    def evaluate(self) -> Dict:
+    def evaluate(self, save_results=False) -> Dict:
         """ Evaluate the model using mean squared error, r2 score and cross validation"""
         logging.info("Starting model evaluation...")
         X_train, X_test, y_train, y_test = self.train_split
@@ -95,7 +98,8 @@ class BaseRegressionModel:
         }
         self.metrics = metrics
         metrics_df = pd.DataFrame([metrics])
-        metrics_df.to_csv(f'{self.save_path}/{self.identifier}_metrics.csv', index=False)
+        if save_results:
+            metrics_df.to_csv(f'{self.save_path}/{self.identifier}_metrics.csv', index=False)
         logging.info("Finished model evaluation.")
         return metrics
 
@@ -218,30 +222,80 @@ class RandomForestModel(BaseRegressionModel):
         logging.info("Finished Random Forest model training.")
 
 if __name__ == "__main__":
-    logging.info("Starting main execution...")
-    folder_path = "/home/georg/Documents/Master/Data_Literacy"
-    data_df = pd.read_csv(folder_path + "/city_listings.csv")
-    identifier_linear = "test_LinearRegression"
-    identifier_rf = "test_RandomForest"
-    safe_path_linear = folder_path + "/DataLit-InsideAirbnb" + "/results/" + identifier_linear + "/"
-    safe_path_rf = folder_path + "/DataLit-InsideAirbnb" + "/results/" + identifier_rf + "/"
-    
-    Feature_Selection = {
-        'features': [
-            "accommodates",
-            "bathrooms",
-            "bedrooms",
-            "beds",
-            "review_scores_value",
-            "distance_to_city_center",
-            "average_review_length"],
-        'target': 'price'
-    }
+    logging.info("Script started")
+    folder_path = "/kaggle"
+    data_df = pd.read_csv(folder_path + "/input/datalit-dataset/city_listings_custom_feature.csv")
+    identifier_linear = "Berlin_prediction_Linear"
+    safe_path_linear = folder_path + "/working/" + identifier + "/"
+    identifier_rf = "Berlin_prediction_RandomForest"
+    safe_path_rf = folder_path + "/working/" + identifier + "/"
+    if not os.path.exists(safe_path_linear):
+        os.makedirs(safe_path_linear)
+    if not os.path.exists(safe_path_rf):
+        os.makedirs(safe_path_rf)
+        
+   Feature_Selection = {
+            'features': [
+                "host_response_rate",
+                "host_acceptance_rate",
+                "host_listings_count",
+                "host_total_listings_count",
+                #"latitude",
+                #"longitude",
+                "accommodates",
+                "bathrooms",
+                "bedrooms",
+                "beds",
+                "minimum_nights",
+                "maximum_nights",
+                "minimum_minimum_nights",
+                "maximum_minimum_nights",
+                "minimum_maximum_nights",
+                "maximum_maximum_nights",
+                "minimum_nights_avg_ntm",
+                "maximum_nights_avg_ntm",
+                "availability_30",
+                "availability_60",
+                "availability_90",
+                "availability_365",
+                "number_of_reviews",
+                "number_of_reviews_ltm",
+                "number_of_reviews_l30d",
+                "review_scores_rating",
+                "review_scores_accuracy",
+                "review_scores_cleanliness",
+                "review_scores_checkin",
+                "review_scores_communication",
+                "review_scores_location",
+                "review_scores_value",
+                "calculated_host_listings_count",
+                "calculated_host_listings_count_entire_homes",
+                "calculated_host_listings_count_private_rooms",
+                "calculated_host_listings_count_shared_rooms",
+                "reviews_per_month",
+                "distance_to_city_center",
+                "average_review_length",
+                "spelling_errors",
+                "host_profile_pic_people_visible",
+                "host_profile_pic_male_or_female",
+                "host_profile_pic_setting_indoor_outdoor",
+                "host_profile_pic_professionality",
+                "host_profile_pic_quality",
+                "aesthetic_score",
+               "picture_url_setting_indoor_outdoor",
+                "amount_of_amenities",
+                "berlin",
+                "barcelona",
+                "istanbul",
+                "london",
+                "oslo"
+
+            ],
+        
+            'target': 'price'
+        }
 
     test_split_size = 0.2
-    add_custom_features = ['distance_to_city_center', 'average_review_length']
-    Feature_Adder = AddCustomFeatures(data_df, add_custom_features)
-    data_df = Feature_Adder.return_data()
     RandomForest_Hparams = {
         'n_estimators': 100,
         'max_depth': 10,

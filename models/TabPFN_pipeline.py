@@ -11,13 +11,12 @@ from sklearn.metrics import r2_score
 from sklearn.model_selection import cross_val_score
 from typing import Tuple, Dict
 import shap
-from add_custom_features import AddCustomFeatures
 import matplotlib.pyplot as plt
 import logging
 from tqdm import tqdm
 import torch
 from scipy.stats import pearsonr
-
+import os
 
 class TabPFNRegression():
     """ Fit, evaluate, and get attributions regression models (current: Random Forest and Linear Regression)"""
@@ -51,13 +50,16 @@ class TabPFNRegression():
         # Remove dollar sign and convert to float
         if y.dtype == object:
             y = y.replace('[\$,]', '', regex=True).astype(float)
-    
+        # Keep only rows where y <= 10000
+        mask = y <= 10000
+        X, y = X[mask], y[mask]
         return X, y
     
     def fit(self) -> None:
         """ Train and predict using Linear Regression and Random Forest"""
+        X_train, X_test, y_train, y_test = self.train_split
         reg = TabPFNRegressor()
-        reg.fit(self.X, self.y)
+        reg.fit(X_train, y_train)
         self.model = reg
         return self.model
        
@@ -71,18 +73,18 @@ class TabPFNRegression():
         if save_results == True:
             # Optionally save predictions
             results_df = pd.DataFrame({'y_test': y, 'y_pred': predictions})
-            results_df.to_csv(f'{self.save_path}/{self.identifier_rf}_results.csv', index=False)
+            results_df.to_csv(f'{self.save_path}/{self.identifier}_results.csv', index=False)
         
 
         return predictions
 
-    def evaluate(self) -> Tuple:
+    def evaluate(self, save_results=False) -> Tuple:
         """ Evaluate the models using mean squared error, r2 score and cross validation"""
         X_train, X_test, y_train, y_test = self.train_split
 
         pred = self.model.predict(X_test)
         mse = mean_squared_error(y_test, pred)
-        r2, p_price = pearsonr(y_test, pred)
+        r2, p = pearsonr(y_test, pred)
         
         # Cross-validation for Random Forest
         #reg_cv_scores = cross_val_score(self.reg_model, X_train, y_train, cv=10, scoring='accuracy')
@@ -94,7 +96,7 @@ class TabPFNRegression():
         tabpfn_metrics = {
             'mse': mse,
             'r2': r2,
-            'p_value': p_price
+            'p_value': p
         }
         self.metrics = tabpfn_metrics
 
@@ -222,34 +224,84 @@ class TabPFNRegression():
 
 if __name__ == "__main__":
     #folder_path = "/Users/georgtirpitz/Documents/Data_Literacy"
-    folder_path = "/home/georg/Documents/Master/Data_Literacy"
-    data_df = pd.read_csv(folder_path + "/city_listings.csv")
+    folder_path = "/kaggle"
+    data_df = pd.read_csv(folder_path + "/input/datalit-dataset/european_cities_data.csv")
     identifier = "Berlin_prediction_TabPFN"
-    safe_path = folder_path + "/DataLit-InsideAirbnb" + "/results/" + identifier + "/"
-    
+    safe_path = folder_path + "/working/" + identifier + "/"
+    if not os.path.exists(safe_path):
+        os.makedirs(safe_path)
+        
+    #print(data_df.keys())
+    #pd.set_option('display.max_columns', None)
+    #print(data_df.head(5))
     # Setting features and target
     Feature_Selection = {
-        'features': [
-            "accommodates",
-            "bathrooms",
-            "bedrooms",
-            "beds",
-            "review_scores_value",
-            "distance_to_city_center",
-            "average_review_length"],
+            'features': [
+                "host_response_rate",
+                "host_acceptance_rate",
+                "host_listings_count",
+                "host_total_listings_count",
+                #"latitude",
+                #"longitude",
+                "accommodates",
+                "bathrooms",
+                "bedrooms",
+                "beds",
+                "minimum_nights",
+                "maximum_nights",
+                "minimum_minimum_nights",
+                "maximum_minimum_nights",
+                "minimum_maximum_nights",
+                "maximum_maximum_nights",
+                "minimum_nights_avg_ntm",
+                "maximum_nights_avg_ntm",
+                "availability_30",
+                "availability_60",
+                "availability_90",
+                "availability_365",
+                "number_of_reviews",
+                "number_of_reviews_ltm",
+                "number_of_reviews_l30d",
+                "review_scores_rating",
+                "review_scores_accuracy",
+                "review_scores_cleanliness",
+                "review_scores_checkin",
+                "review_scores_communication",
+                "review_scores_location",
+                "review_scores_value",
+                "calculated_host_listings_count",
+                "calculated_host_listings_count_entire_homes",
+                "calculated_host_listings_count_private_rooms",
+                "calculated_host_listings_count_shared_rooms",
+                "reviews_per_month",
+                "distance_to_city_center",
+                "average_review_length",
+                "spelling_errors",
+                "host_profile_pic_people_visible",
+                "host_profile_pic_male_or_female",
+                "host_profile_pic_setting_indoor_outdoor",
+                "host_profile_pic_professionality",
+                "host_profile_pic_quality",
+                "aesthetic_score",
+               "picture_url_setting_indoor_outdoor",
+                "amount_of_amenities",
+                "berlin",
+                "barcelona",
+                "istanbul",
+                "london",
+                "oslo"
 
-        'target': 'price'
-    }
-
+            ],
+        
+            'target': 'price'
+        }
+    
     # Setting test split size
     test_split_size= 0.2
-    add_custom_features = ['distance_to_city_center', 'average_review_length']
-    Feature_Adder = AddCustomFeatures(data_df, add_custom_features)
-    data_df = Feature_Adder.return_data()
     model = TabPFNRegression(data_df, Feature_Selection, test_split_size, safe_path, identifier)
     X, y = model.model_specific_preprocess(data_df, Feature_Selection)
     model.fit()
     preds = model.predict(X, save_results=True)
     metrics = model.evaluate()
     #importances = model.feature_importance(5, 1000, 100, save_results=True)
-    
+    model.plot()
