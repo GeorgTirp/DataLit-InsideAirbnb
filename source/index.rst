@@ -19,6 +19,7 @@ The project is based on the InsideAirBnB dataset, which is a collection of data 
    :maxdepth: 2
    :caption: Contents:
    
+   Data
    Preprocessing
    Models
    Results

@@ -17,7 +17,7 @@ import re
 #from add_custom_features import AddCustomFeatures
 import logging
 import os
-
+import joblib
 
 # A function to remove outliers
 def remove_outliers(X, y):
@@ -122,7 +122,10 @@ def run_XGBoost_pipeline(data='', target='listing_price', features=[],
     ### -- Load and preprocess the data -- ###
     data = pd.read_csv(data)
 
-    data['price'] = data['price'].replace('[\$,]', '', regex=True).astype(float)
+    if data['price'].dtype == object:
+            data['price'] = data['price'].replace('[\$,]', '', regex=True).astype(float)
+
+    # Remove superexpensive listings
     data = data[data['price'] < 1000]
 
     # Add custom features
@@ -175,9 +178,9 @@ def run_XGBoost_pipeline(data='', target='listing_price', features=[],
 
 
     # Safe the preprocessed data
-    if save_results == True:
-        X.to_csv(f'data/{identifier}_X.csv', index=False)
-        log_and_print(f'Preprocessed data saved as data/{identifier}_X.csv')
+    #if save_results == True:
+    #    X.to_csv(f'data/{identifier}_X.csv', index=False)
+    #    log_and_print(f'Preprocessed data saved as data/{identifier}_X.csv')
 
     ### ---------------------------------- ###
 
@@ -189,16 +192,16 @@ def run_XGBoost_pipeline(data='', target='listing_price', features=[],
     hyperparameter_cv = KFold(n_splits=cv, shuffle=True, random_state=42)
     model_evaluation_cv = KFold(n_splits=cv, shuffle=True, random_state=42)
 
-    #XGBoost hyperparameters grid    
     param_grid_xgb = {
-    #    'n_estimators': [150, 200, 500, 1000, 50],
-        'learning_rate': [0.001, 0.01, 0.1, 0.2],
-    #    'max_depth': [5, 6, 7, 8, 9, 10],
-    #    'subsample': [0.6, 0.8, 1.0],
-    #    'colsample_bytree': [0.6, 0.8, 1.0]
-        'reg_alpha': [0, 0.1, 0.5],
-        'reg_lambda': [1, 1.5, 2]
+#        'n_estimators': [100, 200, 500],  # Avoid very low (50) and very high (1000) values initially
+        'learning_rate': [0.01, 0.1, 0.2],  # Adding 0.05 for better granularity
+        'max_depth': [3, 6, 9],  # Including lower values for regularization
+        'subsample': [0.7, 0.85, 1.0],  # Adjusted to avoid too low sampling
+        'colsample_bytree': [0.7, 0.85, 1.0],  # Matching subsample strategy
+        'reg_alpha': [0, 0.5, 1],  # Adding 1 for stronger L1 regularization
+        'reg_lambda': [0.5, 1.2, 2, 5]  # Including 0.5 for more flexibility
     }
+
 
     # log_and_print the Hyperparamer grid
     log_and_print('----------------------------------')
@@ -244,6 +247,12 @@ def run_XGBoost_pipeline(data='', target='listing_price', features=[],
         all_shap_prices.append(shap_prices)
         log_and_print(f'SHAP values estimated for fold [{fold}/{cv}]')
         log_and_print('----------------------------------')
+        
+        # Save the best model
+        model_save_path = f'{save_path}/{identifier}_best_model_fold_{fold}.joblib'
+        joblib.dump(best_model, model_save_path)
+        log_and_print(f'Best model for fold [{fold}/{cv}] saved at {model_save_path}')
+        
         fold += 1
 
     log_and_print('All folds trained')
