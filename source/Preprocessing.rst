@@ -9,8 +9,19 @@ Preprocessing
 The data was automatically downloaded from the InsideAirBnB website:
 `InsideAirBnB <http://insideairbnb.com/get-the-data.html>`_
 
-Then the data was aggregated into a single csv file for each city by the following script:
 
-.. literalinclude:: ../preprocessing/preprocessing.py
-   :language: python
-   :caption: preprocessing.py
+
+Visualisation of the prices:
+----------------------------
+
+.. raw:: html
+
+   <iframe src="_static/price_plot_on_map.html" width="100%" height="600px"></iframe>
+
+
+Visualisation of the custom features: Distance_to_city_center
+-------------------------------------------------------------
+
+.. raw:: html
+
+   <iframe src="_static/distance_to_city_center_plot_on_map.html" width="100%" height="600px"></iframe>
