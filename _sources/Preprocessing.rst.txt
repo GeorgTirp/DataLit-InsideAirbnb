@@ -14,3 +14,11 @@ Then the data was aggregated into a single csv file for each city by the followi
 .. literalinclude:: ../preprocessing/preprocessing.py
    :language: python
    :caption: preprocessing.py
+
+
+Visualisation of the feature: Distance to the city center
+---------------------------------------------------------
+
+.. raw:: html
+
+   <iframe src="_static/distance_to_city_center.html" width="100%" height="600px"></iframe>
