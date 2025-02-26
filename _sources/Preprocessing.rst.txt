@@ -19,8 +19,8 @@ Visualisation of the prices:
    <iframe src="_static/price_plot_on_map.html" width="100%" height="600px"></iframe>
 
 
-Visualisation of the custom features
-------------------------------------
+Visualisation of the custom features: Distance_to_city_center
+-------------------------------------------------------------
 
 .. raw:: html
 
