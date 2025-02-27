@@ -1,10 +1,12 @@
 import pandas as pd
 import joblib
 from xgboost import XGBRegressor
+import shap
+
 
 # Define file paths
 model_path = 'results/XGBoost_all_european_cities_no_cv/XGBoost_all_european_cities_no_cv_best_model.joblib'  
-data_path = '/media/sn/Frieder_Data/Master_Machine_Learning/data_preprocessed/european_cities_data_-40000_london.csv'  
+data_path = '/media/sn/Frieder_Data/Master_Machine_Learning/data_preprocessed/london_inference_data.csv'  
 
 # Load the trained model
 best_model = joblib.load(model_path)
@@ -78,10 +80,23 @@ predictions = best_model.predict(input_data)
 if 'price' in input_data_original.columns:
     predictions_df = pd.DataFrame({
         'price': input_data_original['price'],
-        'predictions': predictions
+        'predictions': predictions,
+        'latitude': input_data_original['latitude'],
+        'longitude': input_data_original['longitude']
     })
 else:
     predictions_df = pd.DataFrame({'predictions': predictions})
 predictions_csv_path = 'results/XGBoost_all_european_cities_no_cv/london_inference_data.csv'  # Update with actual path
 predictions_df.to_csv(predictions_csv_path, index=False)
 print(f'Predictions saved at {predictions_csv_path}')
+
+# Perform SHAP analysis
+#explainer = shap.TreeExplainer(best_model)
+#shap_values = explainer.shap_values(input_data)
+#print('SHAP values calculated.')
+#
+## Save SHAP values to CSV
+#shap_values_df = pd.DataFrame(shap_values, columns=input_data.columns)
+#shap_values_csv_path = 'results/XGBoost_all_european_cities_no_cv/london_shap_values.csv'  # Update with actual path
+#shap_values_df.to_csv(shap_values_csv_path, index=False)
+#print(f'SHAP values saved at {shap_values_csv_path}')
