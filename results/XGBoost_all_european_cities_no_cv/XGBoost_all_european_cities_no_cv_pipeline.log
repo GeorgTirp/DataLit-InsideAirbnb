@@ -717,3 +717,147 @@ Name: price, dtype: float64
 2025-02-27 14:55:03,801 - INFO - Evaluating Model...
 2025-02-27 14:55:03,831 - INFO - Pearson correlation: 0.8458127212106155, p-value: 0.0
 2025-02-27 14:55:03,854 - INFO - Results saved as results/XGBoost_all_european_cities_no_cv_results.csv
+2025-02-27 18:15:06,955 - INFO - Starting the XGBoost pipeline...
+2025-02-27 18:15:06,955 - INFO - ----------------------------------
+2025-02-27 18:15:06,955 - INFO - Parameters:
+2025-02-27 18:15:06,955 - INFO - Data: /media/sn/Frieder_Data/Master_Machine_Learning/data_preprocessed/european_cities_data_-40000_london.csv
+2025-02-27 18:15:06,955 - INFO - Target: price
+2025-02-27 18:15:06,955 - INFO - Features: ['host_response_rate', 'host_acceptance_rate', 'host_listings_count', 'host_total_listings_count', 'accommodates', 'bathrooms', 'bedrooms', 'beds', 'minimum_nights', 'maximum_nights', 'minimum_minimum_nights', 'maximum_minimum_nights', 'minimum_maximum_nights', 'maximum_maximum_nights', 'minimum_nights_avg_ntm', 'maximum_nights_avg_ntm', 'availability_30', 'availability_60', 'availability_90', 'availability_365', 'number_of_reviews', 'number_of_reviews_ltm', 'number_of_reviews_l30d', 'review_scores_rating', 'review_scores_accuracy', 'review_scores_cleanliness', 'review_scores_checkin', 'review_scores_communication', 'review_scores_location', 'review_scores_value', 'calculated_host_listings_count', 'calculated_host_listings_count_entire_homes', 'calculated_host_listings_count_private_rooms', 'calculated_host_listings_count_shared_rooms', 'reviews_per_month', 'distance_to_city_center', 'average_review_length', 'spelling_errors', 'host_profile_pic_people_visible', 'host_profile_pic_male_or_female', 'host_profile_pic_setting_indoor_outdoor', 'host_profile_pic_professionality', 'host_profile_pic_quality', 'aesthetic_score', 'picture_url_setting_indoor_outdoor', 'amount_of_amenities', 'berlin', 'barcelona', 'istanbul', 'london', 'Oslo', 'host_is_superhost_t', 'host_has_profile_pic_t', 'host_identity_verified_t', 'has_availability_t', 'instant_bookable_t', 'host_response_time_a few days or more', 'host_response_time_not available', 'host_response_time_within a day', 'host_response_time_within a few hours', 'host_response_time_within an hour', 'room_type_Entire home/apt', 'room_type_Hotel room', 'room_type_Private room', 'room_type_Shared room']
+2025-02-27 18:15:06,955 - INFO - Outlier removal: False
+2025-02-27 18:15:06,955 - INFO - CV: 5
+2025-02-27 18:15:06,955 - INFO - Correlation threshold: 1
+2025-02-27 18:15:06,955 - INFO - Save results: True
+2025-02-27 18:15:06,955 - INFO - Additional custom features: []
+2025-02-27 18:15:06,955 - INFO - Save path: results//XGBoost_all_european_cities_no_cv
+2025-02-27 18:15:06,955 - INFO - Identifier: XGBoost_all_european_cities_no_cv
+2025-02-27 18:15:06,955 - INFO - Random state: 42
+2025-02-27 18:15:06,955 - INFO - ----------------------------------
+2025-02-27 18:15:13,294 - INFO - Using the following features: ['host_response_rate', 'host_acceptance_rate', 'host_listings_count', 'host_total_listings_count', 'accommodates', 'bathrooms', 'bedrooms', 'beds', 'minimum_nights', 'maximum_nights', 'minimum_minimum_nights', 'maximum_minimum_nights', 'minimum_maximum_nights', 'maximum_maximum_nights', 'minimum_nights_avg_ntm', 'maximum_nights_avg_ntm', 'availability_30', 'availability_60', 'availability_90', 'availability_365', 'number_of_reviews', 'number_of_reviews_ltm', 'number_of_reviews_l30d', 'review_scores_rating', 'review_scores_accuracy', 'review_scores_cleanliness', 'review_scores_checkin', 'review_scores_communication', 'review_scores_location', 'review_scores_value', 'calculated_host_listings_count', 'calculated_host_listings_count_entire_homes', 'calculated_host_listings_count_private_rooms', 'calculated_host_listings_count_shared_rooms', 'reviews_per_month', 'distance_to_city_center', 'average_review_length', 'spelling_errors', 'host_profile_pic_people_visible', 'host_profile_pic_male_or_female', 'host_profile_pic_setting_indoor_outdoor', 'host_profile_pic_professionality', 'host_profile_pic_quality', 'aesthetic_score', 'picture_url_setting_indoor_outdoor', 'amount_of_amenities', 'berlin', 'barcelona', 'istanbul', 'london', 'Oslo', 'host_is_superhost_t', 'host_has_profile_pic_t', 'host_identity_verified_t', 'has_availability_t', 'instant_bookable_t', 'host_response_time_a few days or more', 'host_response_time_not available', 'host_response_time_within a day', 'host_response_time_within a few hours', 'host_response_time_within an hour', 'room_type_Entire home/apt', 'room_type_Hotel room', 'room_type_Private room', 'room_type_Shared room']
+2025-02-27 18:15:13,294 - INFO - Index(['Unnamed: 0', 'city', 'name', 'description', 'neighborhood_overview',
+       'picture_url', 'host_since', 'host_about', 'host_response_rate',
+       'host_acceptance_rate', 'host_picture_url', 'host_listings_count',
+       'host_total_listings_count', 'neighbourhood_cleansed', 'latitude',
+       'longitude', 'property_type', 'accommodates', 'bathrooms',
+       'bathrooms_text', 'bedrooms', 'beds', 'amenities', 'price',
+       'minimum_nights', 'maximum_nights', 'minimum_minimum_nights',
+       'maximum_minimum_nights', 'minimum_maximum_nights',
+       'maximum_maximum_nights', 'minimum_nights_avg_ntm',
+       'maximum_nights_avg_ntm', 'availability_30', 'availability_60',
+       'availability_90', 'availability_365', 'number_of_reviews',
+       'number_of_reviews_ltm', 'number_of_reviews_l30d', 'first_review',
+       'last_review', 'review_scores_rating', 'review_scores_accuracy',
+       'review_scores_cleanliness', 'review_scores_checkin',
+       'review_scores_communication', 'review_scores_location',
+       'review_scores_value', 'calculated_host_listings_count',
+       'calculated_host_listings_count_entire_homes',
+       'calculated_host_listings_count_private_rooms',
+       'calculated_host_listings_count_shared_rooms', 'reviews_per_month',
+       'comments', 'distance_to_city_center', 'average_review_length',
+       'spelling_errors', 'host_profile_pic_people_visible',
+       'host_profile_pic_male_or_female',
+       'host_profile_pic_setting_indoor_outdoor',
+       'host_profile_pic_professionality', 'host_profile_pic_quality',
+       'aesthetic_score', 'picture_url_setting_indoor_outdoor',
+       'amount_of_amenities', 'berlin', 'barcelona', 'istanbul', 'london',
+       'oslo', 'host_is_superhost_t', 'host_has_profile_pic_t',
+       'host_identity_verified_t', 'has_availability_t', 'instant_bookable_t',
+       'host_response_time_a few days or more',
+       'host_response_time_not available', 'host_response_time_within a day',
+       'host_response_time_within a few hours',
+       'host_response_time_within an hour', 'room_type_Entire home/apt',
+       'room_type_Hotel room', 'room_type_Private room',
+       'room_type_Shared room'],
+      dtype='object')
+2025-02-27 18:15:13,295 - INFO - ['host_response_rate', 'host_acceptance_rate', 'host_listings_count', 'host_total_listings_count', 'accommodates', 'bathrooms', 'bedrooms', 'beds', 'minimum_nights', 'maximum_nights', 'minimum_minimum_nights', 'maximum_minimum_nights', 'minimum_maximum_nights', 'maximum_maximum_nights', 'minimum_nights_avg_ntm', 'maximum_nights_avg_ntm', 'availability_30', 'availability_60', 'availability_90', 'availability_365', 'number_of_reviews', 'number_of_reviews_ltm', 'number_of_reviews_l30d', 'review_scores_rating', 'review_scores_accuracy', 'review_scores_cleanliness', 'review_scores_checkin', 'review_scores_communication', 'review_scores_location', 'review_scores_value', 'calculated_host_listings_count', 'calculated_host_listings_count_entire_homes', 'calculated_host_listings_count_private_rooms', 'calculated_host_listings_count_shared_rooms', 'reviews_per_month', 'distance_to_city_center', 'average_review_length', 'spelling_errors', 'host_profile_pic_people_visible', 'host_profile_pic_male_or_female', 'host_profile_pic_setting_indoor_outdoor', 'host_profile_pic_professionality', 'host_profile_pic_quality', 'aesthetic_score', 'picture_url_setting_indoor_outdoor', 'amount_of_amenities', 'berlin', 'barcelona', 'istanbul', 'london', 'Oslo', 'host_is_superhost_t', 'host_has_profile_pic_t', 'host_identity_verified_t', 'has_availability_t', 'instant_bookable_t', 'host_response_time_a few days or more', 'host_response_time_not available', 'host_response_time_within a day', 'host_response_time_within a few hours', 'host_response_time_within an hour', 'room_type_Entire home/apt', 'room_type_Hotel room', 'room_type_Private room', 'room_type_Shared room']
+2025-02-27 18:16:36,715 - INFO - Starting the XGBoost pipeline...
+2025-02-27 18:16:36,715 - INFO - ----------------------------------
+2025-02-27 18:16:36,715 - INFO - Parameters:
+2025-02-27 18:16:36,715 - INFO - Data: /media/sn/Frieder_Data/Master_Machine_Learning/data_preprocessed/european_cities_data_-40000_london.csv
+2025-02-27 18:16:36,715 - INFO - Target: price
+2025-02-27 18:16:36,715 - INFO - Features: ['host_response_rate', 'host_acceptance_rate', 'host_listings_count', 'host_total_listings_count', 'accommodates', 'bathrooms', 'bedrooms', 'beds', 'minimum_nights', 'maximum_nights', 'minimum_minimum_nights', 'maximum_minimum_nights', 'minimum_maximum_nights', 'maximum_maximum_nights', 'minimum_nights_avg_ntm', 'maximum_nights_avg_ntm', 'availability_30', 'availability_60', 'availability_90', 'availability_365', 'number_of_reviews', 'number_of_reviews_ltm', 'number_of_reviews_l30d', 'review_scores_rating', 'review_scores_accuracy', 'review_scores_cleanliness', 'review_scores_checkin', 'review_scores_communication', 'review_scores_location', 'review_scores_value', 'calculated_host_listings_count', 'calculated_host_listings_count_entire_homes', 'calculated_host_listings_count_private_rooms', 'calculated_host_listings_count_shared_rooms', 'reviews_per_month', 'distance_to_city_center', 'average_review_length', 'spelling_errors', 'host_profile_pic_people_visible', 'host_profile_pic_male_or_female', 'host_profile_pic_setting_indoor_outdoor', 'host_profile_pic_professionality', 'host_profile_pic_quality', 'aesthetic_score', 'picture_url_setting_indoor_outdoor', 'amount_of_amenities', 'berlin', 'barcelona', 'istanbul', 'london', 'oslo', 'host_is_superhost_t', 'host_has_profile_pic_t', 'host_identity_verified_t', 'has_availability_t', 'instant_bookable_t', 'host_response_time_a few days or more', 'host_response_time_not available', 'host_response_time_within a day', 'host_response_time_within a few hours', 'host_response_time_within an hour', 'room_type_Entire home/apt', 'room_type_Hotel room', 'room_type_Private room', 'room_type_Shared room']
+2025-02-27 18:16:36,715 - INFO - Outlier removal: False
+2025-02-27 18:16:36,715 - INFO - CV: 5
+2025-02-27 18:16:36,715 - INFO - Correlation threshold: 1
+2025-02-27 18:16:36,715 - INFO - Save results: True
+2025-02-27 18:16:36,715 - INFO - Additional custom features: []
+2025-02-27 18:16:36,715 - INFO - Save path: results//XGBoost_all_european_cities_no_cv
+2025-02-27 18:16:36,715 - INFO - Identifier: XGBoost_all_european_cities_no_cv
+2025-02-27 18:16:36,715 - INFO - Random state: 42
+2025-02-27 18:16:36,715 - INFO - ----------------------------------
+2025-02-27 18:16:43,035 - INFO - Using the following features: ['host_response_rate', 'host_acceptance_rate', 'host_listings_count', 'host_total_listings_count', 'accommodates', 'bathrooms', 'bedrooms', 'beds', 'minimum_nights', 'maximum_nights', 'minimum_minimum_nights', 'maximum_minimum_nights', 'minimum_maximum_nights', 'maximum_maximum_nights', 'minimum_nights_avg_ntm', 'maximum_nights_avg_ntm', 'availability_30', 'availability_60', 'availability_90', 'availability_365', 'number_of_reviews', 'number_of_reviews_ltm', 'number_of_reviews_l30d', 'review_scores_rating', 'review_scores_accuracy', 'review_scores_cleanliness', 'review_scores_checkin', 'review_scores_communication', 'review_scores_location', 'review_scores_value', 'calculated_host_listings_count', 'calculated_host_listings_count_entire_homes', 'calculated_host_listings_count_private_rooms', 'calculated_host_listings_count_shared_rooms', 'reviews_per_month', 'distance_to_city_center', 'average_review_length', 'spelling_errors', 'host_profile_pic_people_visible', 'host_profile_pic_male_or_female', 'host_profile_pic_setting_indoor_outdoor', 'host_profile_pic_professionality', 'host_profile_pic_quality', 'aesthetic_score', 'picture_url_setting_indoor_outdoor', 'amount_of_amenities', 'berlin', 'barcelona', 'istanbul', 'london', 'oslo', 'host_is_superhost_t', 'host_has_profile_pic_t', 'host_identity_verified_t', 'has_availability_t', 'instant_bookable_t', 'host_response_time_a few days or more', 'host_response_time_not available', 'host_response_time_within a day', 'host_response_time_within a few hours', 'host_response_time_within an hour', 'room_type_Entire home/apt', 'room_type_Hotel room', 'room_type_Private room', 'room_type_Shared room']
+2025-02-27 18:16:43,036 - INFO - Index(['Unnamed: 0', 'city', 'name', 'description', 'neighborhood_overview',
+       'picture_url', 'host_since', 'host_about', 'host_response_rate',
+       'host_acceptance_rate', 'host_picture_url', 'host_listings_count',
+       'host_total_listings_count', 'neighbourhood_cleansed', 'latitude',
+       'longitude', 'property_type', 'accommodates', 'bathrooms',
+       'bathrooms_text', 'bedrooms', 'beds', 'amenities', 'price',
+       'minimum_nights', 'maximum_nights', 'minimum_minimum_nights',
+       'maximum_minimum_nights', 'minimum_maximum_nights',
+       'maximum_maximum_nights', 'minimum_nights_avg_ntm',
+       'maximum_nights_avg_ntm', 'availability_30', 'availability_60',
+       'availability_90', 'availability_365', 'number_of_reviews',
+       'number_of_reviews_ltm', 'number_of_reviews_l30d', 'first_review',
+       'last_review', 'review_scores_rating', 'review_scores_accuracy',
+       'review_scores_cleanliness', 'review_scores_checkin',
+       'review_scores_communication', 'review_scores_location',
+       'review_scores_value', 'calculated_host_listings_count',
+       'calculated_host_listings_count_entire_homes',
+       'calculated_host_listings_count_private_rooms',
+       'calculated_host_listings_count_shared_rooms', 'reviews_per_month',
+       'comments', 'distance_to_city_center', 'average_review_length',
+       'spelling_errors', 'host_profile_pic_people_visible',
+       'host_profile_pic_male_or_female',
+       'host_profile_pic_setting_indoor_outdoor',
+       'host_profile_pic_professionality', 'host_profile_pic_quality',
+       'aesthetic_score', 'picture_url_setting_indoor_outdoor',
+       'amount_of_amenities', 'berlin', 'barcelona', 'istanbul', 'london',
+       'oslo', 'host_is_superhost_t', 'host_has_profile_pic_t',
+       'host_identity_verified_t', 'has_availability_t', 'instant_bookable_t',
+       'host_response_time_a few days or more',
+       'host_response_time_not available', 'host_response_time_within a day',
+       'host_response_time_within a few hours',
+       'host_response_time_within an hour', 'room_type_Entire home/apt',
+       'room_type_Hotel room', 'room_type_Private room',
+       'room_type_Shared room'],
+      dtype='object')
+2025-02-27 18:16:43,036 - INFO - ['host_response_rate', 'host_acceptance_rate', 'host_listings_count', 'host_total_listings_count', 'accommodates', 'bathrooms', 'bedrooms', 'beds', 'minimum_nights', 'maximum_nights', 'minimum_minimum_nights', 'maximum_minimum_nights', 'minimum_maximum_nights', 'maximum_maximum_nights', 'minimum_nights_avg_ntm', 'maximum_nights_avg_ntm', 'availability_30', 'availability_60', 'availability_90', 'availability_365', 'number_of_reviews', 'number_of_reviews_ltm', 'number_of_reviews_l30d', 'review_scores_rating', 'review_scores_accuracy', 'review_scores_cleanliness', 'review_scores_checkin', 'review_scores_communication', 'review_scores_location', 'review_scores_value', 'calculated_host_listings_count', 'calculated_host_listings_count_entire_homes', 'calculated_host_listings_count_private_rooms', 'calculated_host_listings_count_shared_rooms', 'reviews_per_month', 'distance_to_city_center', 'average_review_length', 'spelling_errors', 'host_profile_pic_people_visible', 'host_profile_pic_male_or_female', 'host_profile_pic_setting_indoor_outdoor', 'host_profile_pic_professionality', 'host_profile_pic_quality', 'aesthetic_score', 'picture_url_setting_indoor_outdoor', 'amount_of_amenities', 'berlin', 'barcelona', 'istanbul', 'london', 'oslo', 'host_is_superhost_t', 'host_has_profile_pic_t', 'host_identity_verified_t', 'has_availability_t', 'instant_bookable_t', 'host_response_time_a few days or more', 'host_response_time_not available', 'host_response_time_within a day', 'host_response_time_within a few hours', 'host_response_time_within an hour', 'room_type_Entire home/apt', 'room_type_Hotel room', 'room_type_Private room', 'room_type_Shared room']
+2025-02-27 18:16:43,043 - INFO - Features:
+2025-02-27 18:16:43,067 - INFO -    host_response_rate  host_acceptance_rate  host_listings_count  ...  room_type_Hotel room  room_type_Private room  room_type_Shared room
+0               100.0                  80.0                  3.0  ...                     0                       0                      0
+1               100.0                  77.0                  4.0  ...                     0                       0                      0
+2               100.0                  54.0                  1.0  ...                     0                       0                      0
+3                50.0                   0.0                  1.0  ...                     0                       0                      0
+4               100.0                  87.0                  1.0  ...                     0                       1                      0
+
+[5 rows x 65 columns]
+2025-02-27 18:16:43,089 - INFO - ----------------------------------
+2025-02-27 18:16:43,089 - INFO - Target:
+2025-02-27 18:16:43,090 - INFO - 0    304.5
+1    252.0
+2    105.0
+3    195.3
+4     81.9
+Name: price, dtype: float64
+2025-02-27 18:16:43,090 - INFO - ----------------------------------
+2025-02-27 18:16:43,090 - INFO - Number of samples: 80337
+2025-02-27 18:16:43,090 - INFO - ----------------------------------
+2025-02-27 18:16:49,859 - INFO - Training the model...
+2025-02-27 18:16:49,859 - INFO - ----------------------------------
+2025-02-27 18:16:49,859 - INFO - Hyperparameter grid:
+2025-02-27 18:16:49,859 - INFO - n_estimators: [100, 200, 500]
+2025-02-27 18:16:49,859 - INFO - learning_rate: [0.01, 0.1, 0.2]
+2025-02-27 18:16:49,859 - INFO - max_depth: [3, 6, 9]
+2025-02-27 18:16:49,859 - INFO - subsample: [0.7, 1.0]
+2025-02-27 18:16:49,859 - INFO - reg_alpha: [0, 0.5, 1]
+2025-02-27 18:16:49,859 - INFO - reg_lambda: [1, 2, 5]
+2025-02-27 18:16:49,859 - INFO - ----------------------------------
+2025-02-27 18:51:50,573 - INFO - Mean Squared Error: 4710.06098417079
+2025-02-27 18:51:50,573 - INFO - Best hyperparameters: {'learning_rate': 0.1, 'max_depth': 9, 'n_estimators': 500, 'reg_alpha': 1, 'reg_lambda': 5, 'subsample': 0.7}
+2025-02-27 18:51:50,574 - INFO - Estimating SHAP values...
+2025-02-27 18:58:51,442 - INFO - SHAP values estimated
+2025-02-27 18:58:51,442 - INFO - ----------------------------------
+2025-02-27 18:58:54,464 - INFO - SHAP values saved at results//XGBoost_all_european_cities_no_cv/XGBoost_all_european_cities_no_cv_shap_values.csv
+2025-02-27 18:58:54,529 - INFO - Best model saved at results//XGBoost_all_european_cities_no_cv/XGBoost_all_european_cities_no_cv_best_model.joblib
+2025-02-27 18:58:54,529 - INFO - Evaluating Model...
+2025-02-27 18:58:54,531 - INFO - Pearson correlation: 0.8475916596264343, p-value: 0.0
+2025-02-27 18:58:54,555 - INFO - Results saved as results/XGBoost_all_european_cities_no_cv_results.csv

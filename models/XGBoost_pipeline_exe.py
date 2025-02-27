@@ -69,9 +69,22 @@ features = [
     "barcelona",
     "istanbul",
     "london",
-    "oslo"
+    "oslo",
+    "host_is_superhost_t",
+    "host_has_profile_pic_t",
+    "host_identity_verified_t",
+    "has_availability_t",
+    "instant_bookable_t",
+    "host_response_time_a few days or more",
+    "host_response_time_not available",
+    "host_response_time_within a day",
+    "host_response_time_within a few hours",
+    "host_response_time_within an hour",
+    "room_type_Entire home/apt",
+    "room_type_Hotel room",
+    "room_type_Private room",
+    "room_type_Shared room"
 ]
-
 
 # Outlier removal?
 outlier_removal = False

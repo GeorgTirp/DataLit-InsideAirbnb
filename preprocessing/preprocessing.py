@@ -133,7 +133,7 @@ class InsideAirbnbDataset:
             process_all_cities: bool = True,
             cities_to_process: list   = ["berlin"],
             read_from_raw: bool = True,
-            preprocessed_data_dir: Dict = 'preprocessed_data',
+            preprocessed_data_dir: str = 'preprocessed_data',
             file_name: str = 'single_city_listing.csv'):
         
         self.process_all_cities = process_all_cities
@@ -664,18 +664,23 @@ class InsideAirbnbDataset:
         logging.info("local currency to USD conversion done")
 
     def categorical_to_one_hot_encoding(self,
-                                        include_city_column: bool = True) -> None:
+                                        include_city_column: bool = False) -> None:
         
         binary_columns = ['host_is_superhost', 'host_has_profile_pic', 'host_identity_verified', 'has_availability', 'instant_bookable']
-        categorical_columns = ['host_response_time', 'neighbourhood_cleansed', 'property_type', 'room_type']
+        categorical_columns = ['host_response_time', 'room_type']
 
         if include_city_column:
             categorical_columns.append('city')
 
         all_cities_listings = self.all_cities_listings
 
-        all_cities_listings = pd.get_dummies(all_cities_listings, columns=binary_columns, drop_first= True)
+        all_cities_listings = pd.get_dummies(all_cities_listings, columns=binary_columns, drop_first=True)
         all_cities_listings = pd.get_dummies(all_cities_listings, columns=categorical_columns, drop_first=False)
+        
+        # Convert the one-hot encoded columns to integers
+        for col in all_cities_listings.columns:
+            if all_cities_listings[col].dtype == 'bool':
+                all_cities_listings[col] = all_cities_listings[col].astype(int)
 
         self.all_cities_listings = all_cities_listings
         logging.info("one hot encoding done")
@@ -689,22 +694,23 @@ class InsideAirbnbDataset:
 def main() -> None:
     data_set = InsideAirbnbDataset(raw_data_dir= "/media/sn/Frieder_Data/Master_Machine_Learning/data",
             process_all_cities = False,
-            cities_to_process = ["oslo", "barcelona", "berlin", "london", "istanbul", "los_angeles"],
-            read_from_raw = True,
-            preprocessed_data_dir = '/media/sn/Frieder_Data/Master_Machine_Learning/data_preprocessed')
+            cities_to_process = ["preprocessed"],
+            read_from_raw = False,
+            preprocessed_data_dir = '/media/sn/Frieder_Data/Master_Machine_Learning/data_preprocessed',
+            file_name = 'european_cities_data.csv')
 
-    data_set.local_currency_to_usd_conversion()
-    data_set.filter_listings_and_impute_nan()
-    data_set.categorical_to_one_hot_encoding(include_city_column= True)
-    data_set.local_currency_to_usd_conversion()
+    #data_set.local_currency_to_usd_conversion()
+    #data_set.filter_listings_and_impute_nan()
+    data_set.categorical_to_one_hot_encoding(include_city_column= False)
+    #data_set.local_currency_to_usd_conversion()
     
 
-    data_set.download_images_and_save(
-                            saving_dir = '/media/sn/Frieder_Data/Master_Machine_Learning/images',
-                            process_n_images = -1)
+    #data_set.download_images_and_save(
+    #                        saving_dir = '/media/sn/Frieder_Data/Master_Machine_Learning/images',
+    #                        process_n_images = -1)
     #additional_features = ['host_picture_analysis', 'listing_picture_analysis', 'distance_to_city_center', 'average_review_length', 'review_sentiment', 'spelling_errors', 'aesthetic_score', ]
     #AddCustomFeatures(data = data_set.all_cities_listings, additional_features= additional_features)
-    data_set.save_all_cities_listings_to_file(saving_dir='/media/sn/Frieder_Data/Master_Machine_Learning/data_preprocessed')
+    data_set.save_all_cities_listings_to_file(saving_dir='/media/sn/Frieder_Data/Master_Machine_Learning/data_preprocessed', single_data_frames= False)
 
 
 if __name__ == "__main__":
