@@ -193,13 +193,13 @@ def run_XGBoost_pipeline(data='', target='listing_price', features=[],
     model_evaluation_cv = KFold(n_splits=cv, shuffle=True, random_state=42)
 
     param_grid_xgb = {
-#        'n_estimators': [100, 200, 500],  # Avoid very low (50) and very high (1000) values initially
-        'learning_rate': [0.01, 0.1, 0.2],  # Adding 0.05 for better granularity
-        'max_depth': [3, 6, 9],  # Including lower values for regularization
-        'subsample': [0.7, 0.85, 1.0],  # Adjusted to avoid too low sampling
-        'colsample_bytree': [0.7, 0.85, 1.0],  # Matching subsample strategy
-        'reg_alpha': [0, 0.5, 1],  # Adding 1 for stronger L1 regularization
-        'reg_lambda': [0.5, 1.2, 2, 5]  # Including 0.5 for more flexibility
+        'n_estimators': [100, 200, 500],
+        'learning_rate': [0.01, 0.1, 0.2],
+        'max_depth': [3, 6, 9],  
+        'subsample': [0.7, 0.85, 1.0],  
+        'colsample_bytree': [0.7, 0.85, 1.0],  
+        'reg_alpha': [0, 0.5, 1],  
+        'reg_lambda': [0.5, 1.2, 2, 5]  
     }
 
 

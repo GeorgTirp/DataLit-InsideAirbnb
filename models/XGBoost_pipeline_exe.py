@@ -2,6 +2,7 @@ import pandas as pd
 import sys
 from typing import Tuple, Dict
 from XGBoost_pipeline import run_XGBoost_pipeline
+from XGBoost_pipeline_no_cv import run_XGBoost_pipeline_no_cv
 
 
 #######-- Set the parameters for the analysis --#######
@@ -76,7 +77,7 @@ features = [
 outlier_removal = False
 
 # Number of cross-validation folds
-cv = 3
+cv = 5
 
 # Correlation threshold for correlated features
 correlation_threshold = 1
@@ -88,7 +89,7 @@ save_results = True
 safe_path = 'results/'
 
 # Identifier
-identifier = 'XGBoost_all_european_cities'
+identifier = 'XGBoost_all_european_cities_no_cv'
 
 # Random state
 random_state = 42
@@ -97,6 +98,6 @@ random_state = 42
 
 
 ### Run the pipeline with the specified paramters
-run_XGBoost_pipeline(data=data, target=target, features=features, 
+run_XGBoost_pipeline_no_cv(data=data, target=target, features=features, 
                      outlier_removal=outlier_removal, cv=cv, correlation_threshold=correlation_threshold, save_results=True, 
                      save_path=safe_path, identifier=identifier, add_custom_features=add_custom_features, random_state=random_state)
