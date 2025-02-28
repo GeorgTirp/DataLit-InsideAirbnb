@@ -279,6 +279,7 @@ def run_XGBoost_pipeline_no_cv(data='', target='listing_price', features=[],
     else:
         plt.show()
 
+    return r_score**2
 
 
 

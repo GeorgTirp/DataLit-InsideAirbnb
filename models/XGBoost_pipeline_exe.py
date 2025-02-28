@@ -3,7 +3,7 @@ import sys
 from typing import Tuple, Dict
 from XGBoost_pipeline import run_XGBoost_pipeline
 from XGBoost_pipeline_no_cv import run_XGBoost_pipeline_no_cv
-
+import numpy as np
 
 #######-- Set the parameters for the analysis --#######
 # Preprocessed data
@@ -107,10 +107,27 @@ identifier = 'XGBoost_all_european_cities_no_cv'
 # Random state
 random_state = 42
 
+start_value = 100
+
+n = df.shape[0]
+
+indices = np.logspace(np.log10(start_value), np.log10(n))
+
+print(indices)
+
 #######----------------------------------------#######
 
 
+
+r2_scores = {}
+
 ### Run the pipeline with the specified paramters
-run_XGBoost_pipeline_no_cv(data=data, target=target, features=features, 
+for samples in indices:
+    r2_score = run_XGBoost_pipeline(data=data, target=target, features=features, 
                      outlier_removal=outlier_removal, cv=cv, correlation_threshold=correlation_threshold, save_results=True, 
-                     save_path=safe_path, identifier=identifier, add_custom_features=add_custom_features, random_state=random_state)
+                     save_path=safe_path, identifier=identifier, add_custom_features=add_custom_features, random_state=random_state, num_samples_for_training=samples)
+    r2_scores[samples] = r2_score
+
+print(r2_scores)
+dataframe = pd.DataFrame(r2_scores)
+dataframe.to_csv('XGBoost_performance.csv')

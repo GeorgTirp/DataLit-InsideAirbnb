@@ -64,7 +64,7 @@ def plot_results(results_df, r_score, p_value, save_results=False, save_path='re
 
 
 def run_XGBoost_pipeline(data='', target='listing_price', features=[], 
-                     outlier_removal=False, cv=5, correlation_threshold=1, save_results=False, save_path='results/', add_custom_features=[], identifier='', random_state=42):
+                     outlier_removal=False, cv=5, correlation_threshold=1, save_results=False, save_path='results/', add_custom_features=[], identifier='', random_state=42, samples = -1):
     """
     Runs a pipeline to predicts the target variable using an XGBoost regressor. The features are subsequently evaluated using SHAP analysis.
 
@@ -128,6 +128,7 @@ def run_XGBoost_pipeline(data='', target='listing_price', features=[],
     # Remove superexpensive listings
     data = data[data['price'] < 1000]
 
+    data = data.sample(n=samples, replace=False)
     # Add custom features
     #Feature_Adder = AddCustomFeatures(data, add_custom_features)
     #data = Feature_Adder.return_data()
