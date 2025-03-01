@@ -35,6 +35,7 @@ import os
 from scipy.stats import pearsonr
 from rtdl_revisiting_models import FTTransformer # From https://github.com/yandex-research/rtdl-revisiting-models/blob/main/package/README.md
 from torch.optim.lr_scheduler import SequentialLR, LinearLR, CosineAnnealingLR
+from sklearn.model_selection import KFold
 warnings.resetwarnings()
 warnings.simplefilter("ignore", ResourceWarning)
 warnings.simplefilter("ignore")
@@ -241,7 +242,7 @@ class FT_Transfomer():
             y = y.replace('[\$,]', '', regex=True).astype(float)
         y = y.astype(np.float32).to_numpy()
         # Mask to filter rows 
-        mask_y = y <= 10000
+        mask_y = y <= 1000
 
         # Apply the mask to filter y and drop corresponding rows in X
         X = X[mask_y]
@@ -428,18 +429,31 @@ class FT_Transfomer():
             logging.error(f"Error saving model parameters: {e}")
         
 
-    def predict(self, data_df: pd.DataFrame, save_results=False, evaluate=True) -> Dict:
+    def predict(self, data_df: pd.DataFrame, save_results=False, evaluate=True, folds=5) -> Dict:
         """Predict using the trained model"""
+        gc.collect()  # Run Python's garbage collector
+        torch.cuda.empty_cache()  # Clears unused GPU memory
         logging.info("Prediction started")
         # Reuse model_specific_preprocess for preprocessing
         data, _, _ = self.model_specific_preprocess(data_df, self.Feature_Selection, self.feature_types, test_size=self.test_size)
         
         self.model.eval()
-        with torch.no_grad():
-            train_predictions = self.model(data["train"]["x_cont"], data["train"].get("x_cat")).squeeze(-1).cpu().numpy()
+        eval_batch_size = 1024  # Reduce batch size to avoid memory overflow
+    
+        def batch_predict(data_part):
+            """Helper function to perform batch-wise prediction"""
+            y_preds = []
+            with torch.no_grad():
+                for batch in delu.iter_batches(data[data_part], eval_batch_size):
+                    batch_pred = self.model(batch["x_cont"], batch.get("x_cat")).squeeze(-1).cpu().numpy()
+                    y_preds.append(batch_pred)
+            return np.concatenate(y_preds)
+
+        # Generate predictions in batches
+        train_predictions = batch_predict("train")
+        test_predictions = batch_predict("test")
+
         y_train = data["train"]["y"].cpu().numpy()
-        with torch.no_grad():
-            test_predictions = self.model(data["test"]["x_cont"], data["test"].get("x_cat")).squeeze(-1).cpu().numpy()
         y_test = data["test"]["y"].cpu().numpy()
 
         predictions = np.concatenate((train_predictions, test_predictions))
@@ -452,8 +466,8 @@ class FT_Transfomer():
         if evaluate == True:
             
             mse = mean_squared_error(y_test, test_predictions)
-            r2, p_price = pearsonr(y_test, test_predictions)
-
+            r, p_price = pearsonr(y_test, test_predictions)
+            r2 = r**2
             logging.info(f"{self.identifier} MSE: {mse}, R2: {r2}")
             logging.info(f"{self.identifier} P_value: {p_price}")
 
@@ -462,6 +476,7 @@ class FT_Transfomer():
                 'r2': r2,
                 'p_value': p_price
             }
+            self.metrics = metrics
             self.metrics = metrics
 
         logging.info("Evaluation completed")
@@ -548,172 +563,3 @@ class FT_Transfomer():
         plt.savefig(f'{self.save_path}/{self.identifier}_actual_vs_predicted.png')
         plt.show()
         plt.close()
-
-
-if __name__ == "__main__":
-    logging.info("Script started")
-    folder_path = "/kaggle"
-    data_df = pd.read_csv(folder_path + "/input/datalit-dataset/european_cities_data_-40000_london.csv")
-    identifier = "Berlin_prediction_FTTransformer"
-    safe_path = folder_path + "/working/" + identifier + "/"
-    torch.cuda.empty_cache()  # Frees up unused memory
-    gc.collect()
-    
-    if not os.path.exists(safe_path):
-        os.makedirs(safe_path)
-    
-    # Setting features and target
-    Feature_Selection = {
-            'features': [
-                "host_response_rate",
-                "host_acceptance_rate",
-                "host_listings_count",
-                "host_total_listings_count",
-                #"latitude",
-                #"longitude",
-                "accommodates",
-                "bathrooms",
-                "bedrooms",
-                "beds",
-                "minimum_nights",
-                "maximum_nights",
-                "minimum_minimum_nights",
-                "maximum_minimum_nights",
-                "minimum_maximum_nights",
-                "maximum_maximum_nights",
-                "minimum_nights_avg_ntm",
-                "maximum_nights_avg_ntm",
-                "availability_30",
-                "availability_60",
-                "availability_90",
-                "availability_365",
-                "number_of_reviews",
-                "number_of_reviews_ltm",
-                "number_of_reviews_l30d",
-                "review_scores_rating",
-                "review_scores_accuracy",
-                "review_scores_cleanliness",
-                "review_scores_checkin",
-                "review_scores_communication",
-                "review_scores_location",
-                "review_scores_value",
-                "calculated_host_listings_count",
-                "calculated_host_listings_count_entire_homes",
-                "calculated_host_listings_count_private_rooms",
-                "calculated_host_listings_count_shared_rooms",
-                "reviews_per_month",
-                "distance_to_city_center",
-                "average_review_length",
-                "spelling_errors",
-                "host_profile_pic_people_visible",
-                "host_profile_pic_male_or_female",
-                "host_profile_pic_setting_indoor_outdoor",
-                "host_profile_pic_professionality",
-                "host_profile_pic_quality",
-                "aesthetic_score",
-               "picture_url_setting_indoor_outdoor",
-                "amount_of_amenities",
-                "berlin",
-                "barcelona",
-                "istanbul",
-                "london",
-                "oslo"
-
-            ],
-        
-            'target': 'price'
-        }
-    
-    
-    feature_types = {
-    "continuous": Feature_Selection["features"],
-    "categorical": []
-    }
-    
-    # Setting test split size
-    test_split_size= 0.2
-    hparams = {
-        "n_blocks": 4,
-        "d_block": 192,
-        "attention_n_heads": 8,
-        "attention_dropout": 0.2,
-        "ffn_d_hidden": None,
-        "ffn_d_hidden_multiplier": 4 / 3,
-        "ffn_dropout": 0.2,
-        "residual_dropout": 0.0}
-    
-    # Initialize Transformer model and training paramters
-    model = FT_Transfomer(
-        data_df, 
-        Feature_Selection,
-        test_split_size,
-        safe_path,
-        identifier,
-        hparams,
-        feature_types)
-    
-    param_groups = [
-    {
-        "params": [p for n, p in model.model.named_parameters() if "bias" not in n and "LayerNorm" not in n],
-        "weight_decay": 1e-3,
-    },
-    {
-        "params": [p for n, p in model.model.named_parameters() if "bias" in n or "LayerNorm" in n],
-        "weight_decay": 0.0,
-    },
-]
-    data, n_cont_features, cat_cardinalities = model.model_specific_preprocess(data_df, Feature_Selection)
-    dataset_size = len(data["train"]["y"])
-    # Create the AdamW optimizer with the same settings
-    optimizer = torch.optim.AdamW(
-        param_groups,
-        lr=0.001,
-        betas=(0.9, 0.99),
-        eps=1e-08,
-        amsgrad=True
-    )
-    #optimizer = torch.optim.LBFGS(model.model.parameters(), lr=0.1, max_iter=20, history_size=10)
-    second_order_method=False
-    n_epochs = 50
-    batch_size = 1024
-    #Create Lerning rate schedule (cosine annealing)
-    steps_per_epoch = dataset_size // batch_size
-    total_steps = steps_per_epoch * n_epochs
-    # Warmup steps (10% of total training steps)
-    warmup_steps = int(0.05 * total_steps)
-    cosine_steps = max(1, total_steps - warmup_steps)  # Ensure T_max is at least 1
-    logging.info(f"Warm-up steps: {warmup_steps}")
-    logging.info(f"Annealing steps: {cosine_steps}")
-    # Define warmup scheduler (linear increase)
-    warmup_scheduler = LinearLR(optimizer, start_factor=0.1, end_factor=1.0, total_iters=warmup_steps)
-    # Define cosine annealing scheduler
-    cosine_scheduler = CosineAnnealingLR(optimizer, T_max=cosine_steps)
-    # Combine warmup and cosine annealing using SequentialLR
-    scheduler = SequentialLR(optimizer, schedulers=[warmup_scheduler, cosine_scheduler], milestones=[warmup_steps])
-    #torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.8)
-    
-    #torch.optim.lr_scheduler.ReduceLROnPlateau(
-    #    optimizer, 
-    #    mode='min', 
-    #    factor=0.1, 
-    #    patience=5, 
-    #    verbose=True, 
-    #    threshold=1e-5, 
-    #    threshold_mode='abs', 
-    #    cooldown=0, 
-    #    min_lr=0, 
-    #    eps=1e-8)
-    
-    model.train(
-        batch_size=batch_size, 
-        patience=50, 
-        n_epochs=n_epochs, 
-        optimizer=optimizer, 
-        scheduler=scheduler, 
-        second_order_method=second_order_method)
-    model.predict(data_df, save_results=True, evaluate=True)
-    model.plot()
-    logging.info(f"Metrics: {model.metrics}")
-    model.feature_importance()
-    #model.save_model(safe_path)
-    logging.info("Script finished")
