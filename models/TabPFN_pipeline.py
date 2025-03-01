@@ -17,6 +17,7 @@ from tqdm import tqdm
 import torch
 from scipy.stats import pearsonr
 import os
+from sklearn.model_selection import KFold
 
 class TabPFNRegression():
     """ Fit, evaluate, and get attributions regression models (current: Random Forest and Linear Regression)"""
@@ -30,8 +31,7 @@ class TabPFNRegression():
         
         self.save_path = save_path
         self.identifier = identifier
-        self.Feature_Selection = Feature_Selection
-
+        self.feature_selection = Feature_Selection
         self.model = None
         self.X, self.y = self.model_specific_preprocess(data_df)
         self.train_split = train_test_split(self.X, self.y, test_size=test_split_size, random_state=42)
@@ -42,17 +42,30 @@ class TabPFNRegression():
         """ Preprocess the data for the TabPFN model"""
         # Ensure all features are numeric
         if Feature_Selection is None:
-            Feature_Selection = self.Feature_Selection
-        data_df = data_df.dropna(subset=Feature_Selection['features'] + [Feature_Selection['target']])
-        X = data_df[Feature_Selection['features']]
-        y = data_df[Feature_Selection['target']]
+            Feature_Selection = self.feature_selection
+        logging.info("Starting model-specific preprocessing...")
+
+        # Drop NaNs in required columns
+        data_df = data_df.dropna(subset=self.feature_selection['features'] + [self.feature_selection['target']])
+        
+        # Convert target variable y to numeric if necessary
+        if data_df[self.feature_selection['target']].dtype == object:
+            data_df[self.feature_selection['target']] = (
+                data_df[self.feature_selection['target']].replace('[\$,]', '', regex=True).astype(float)
+            )
+
+        data_df = data_df[data_df[self.feature_selection['target']] <= 1000]
+        
+        # Extract features (X) and target (y) AFTER filtering
+        X = data_df[self.feature_selection['features']]
+        y = data_df[self.feature_selection['target']]
+        
+        # Fill NaNs in X
+        X = X.fillna(X.mean())
         X = X.apply(pd.to_numeric, errors='coerce')
-        # Remove dollar sign and convert to float
-        if y.dtype == object:
-            y = y.replace('[\$,]', '', regex=True).astype(float)
-        # Keep only rows where y <= 10000
-        mask = y <= 10000
-        X, y = X[mask], y[mask]
+        
+        # Drop NaN values after processing
+        X, y = X.dropna(), y.dropna()
         return X, y
     
     def fit(self) -> None:
@@ -78,29 +91,45 @@ class TabPFNRegression():
 
         return predictions
 
-    def evaluate(self, save_results=False) -> Tuple:
+    def evaluate(self, save_results=False, folds=5) -> Tuple:
         """ Evaluate the models using mean squared error, r2 score and cross validation"""
         X_train, X_test, y_train, y_test = self.train_split
 
-        pred = self.model.predict(X_test)
-        mse = mean_squared_error(y_test, pred)
-        r2, p = pearsonr(y_test, pred)
         
-        # Cross-validation for Random Forest
-        #reg_cv_scores = cross_val_score(self.reg_model, X_train, y_train, cv=10, scoring='accuracy')
-        #reg_cv_mean_score = reg_cv_scores.mean()
+        # Cross-validation for TabPFN
+        kf = KFold(n_splits=folds, shuffle=True, random_state=42)
+        cv_p_values = []
+        cv_r2_scores = []
+        preds = []
+        y_vals = []
+        for train_index, val_index in kf.split(self.X):
+            X_train_kf, X_val_kf = self.X.iloc[train_index], self.X.iloc[val_index]
+            y_train_kf, y_val_kf = self.y.iloc[train_index], self.y.iloc[val_index]
+            self.model.fit(X_train_kf, y_train_kf)
+            pred = self.model.predict(X_val_kf)
+            mse = mean_squared_error(y_val_kf, pred)
+            r, p = pearsonr(y_val_kf, pred)
+            r2 = r**2
+            cv_p_values.append(p)
+            cv_r2_scores.append(r2)
+            #preds.append(pred)
+            #y_vals.append(y_val_kf)
 
-        print(f"TabPFN MSE: {mse}, R2: {r2}")
-        print(f"TabPFN R^2: {r2}")
-    
-        tabpfn_metrics = {
-            'mse': mse,
-            'r2': r2,
-            'p_value': p
+        #preds = np.concatenate(preds)
+        #y_vals = np.concatenate(y_vals)
+        avg_cv_mse = np.mean(cv_p_values)
+        avg_cv_r2 = np.mean(cv_r2_scores)
+
+        metrics = {
+            'mse': avg_cv_mse,
+            'r2': avg_cv_r2,
+            'p_value': p,
+            #'y_pred': preds,
+            #'y_test': y_vals
         }
-        self.metrics = tabpfn_metrics
+        self.metrics = metrics
 
-        return tabpfn_metrics
+        return metrics
     
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 
@@ -222,86 +251,3 @@ class TabPFNRegression():
         plt.show()
         plt.close()
 
-if __name__ == "__main__":
-    #folder_path = "/Users/georgtirpitz/Documents/Data_Literacy"
-    folder_path = "/kaggle"
-    data_df = pd.read_csv(folder_path + "/input/datalit-dataset/european_cities_data.csv")
-    identifier = "Berlin_prediction_TabPFN"
-    safe_path = folder_path + "/working/" + identifier + "/"
-    if not os.path.exists(safe_path):
-        os.makedirs(safe_path)
-        
-    #print(data_df.keys())
-    #pd.set_option('display.max_columns', None)
-    #print(data_df.head(5))
-    # Setting features and target
-    Feature_Selection = {
-            'features': [
-                "host_response_rate",
-                "host_acceptance_rate",
-                "host_listings_count",
-                "host_total_listings_count",
-                #"latitude",
-                #"longitude",
-                "accommodates",
-                "bathrooms",
-                "bedrooms",
-                "beds",
-                "minimum_nights",
-                "maximum_nights",
-                "minimum_minimum_nights",
-                "maximum_minimum_nights",
-                "minimum_maximum_nights",
-                "maximum_maximum_nights",
-                "minimum_nights_avg_ntm",
-                "maximum_nights_avg_ntm",
-                "availability_30",
-                "availability_60",
-                "availability_90",
-                "availability_365",
-                "number_of_reviews",
-                "number_of_reviews_ltm",
-                "number_of_reviews_l30d",
-                "review_scores_rating",
-                "review_scores_accuracy",
-                "review_scores_cleanliness",
-                "review_scores_checkin",
-                "review_scores_communication",
-                "review_scores_location",
-                "review_scores_value",
-                "calculated_host_listings_count",
-                "calculated_host_listings_count_entire_homes",
-                "calculated_host_listings_count_private_rooms",
-                "calculated_host_listings_count_shared_rooms",
-                "reviews_per_month",
-                "distance_to_city_center",
-                "average_review_length",
-                "spelling_errors",
-                "host_profile_pic_people_visible",
-                "host_profile_pic_male_or_female",
-                "host_profile_pic_setting_indoor_outdoor",
-                "host_profile_pic_professionality",
-                "host_profile_pic_quality",
-                "aesthetic_score",
-               "picture_url_setting_indoor_outdoor",
-                "amount_of_amenities",
-                "berlin",
-                "barcelona",
-                "istanbul",
-                "london",
-                "oslo"
-
-            ],
-        
-            'target': 'price'
-        }
-    
-    # Setting test split size
-    test_split_size= 0.2
-    model = TabPFNRegression(data_df, Feature_Selection, test_split_size, safe_path, identifier)
-    X, y = model.model_specific_preprocess(data_df, Feature_Selection)
-    model.fit()
-    preds = model.predict(X, save_results=True)
-    metrics = model.evaluate()
-    #importances = model.feature_importance(5, 1000, 100, save_results=True)
-    model.plot()
