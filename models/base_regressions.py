@@ -17,7 +17,7 @@ import shap
 import logging
 from tqdm import tqdm
 from scipy.stats import pearsonr
-
+from sklearn.model_selection import KFold
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -48,21 +48,29 @@ class BaseRegressionModel:
     def model_specific_preprocess(self, data_df: pd.DataFrame) -> Tuple:
         """ Preprocess the data for the model"""
         logging.info("Starting model-specific preprocessing...")
+
+        # Drop NaNs in required columns
         data_df = data_df.dropna(subset=self.feature_selection['features'] + [self.feature_selection['target']])
+        
+        # Convert target variable y to numeric if necessary
+        if data_df[self.feature_selection['target']].dtype == object:
+            data_df[self.feature_selection['target']] = (
+                data_df[self.feature_selection['target']].replace('[\$,]', '', regex=True).astype(float)
+            )
+
+        data_df = data_df[data_df[self.feature_selection['target']] <= 1000]
+        
+        # Extract features (X) and target (y) AFTER filtering
         X = data_df[self.feature_selection['features']]
         y = data_df[self.feature_selection['target']]
+        
+        # Fill NaNs in X
         X = X.fillna(X.mean())
         X = X.apply(pd.to_numeric, errors='coerce')
-        if y.dtype == object:
-            y = y.replace('[\$,]', '', regex=True).astype(float)
-        # Keep only rows where y <= 10000
-        mask = y <= 10000
-        X, y = X[mask], y[mask]
         
-        # Z-score normalization for numerical features
-        numerical_features = X.select_dtypes(include=[np.number]).columns
-        X[numerical_features] = X[numerical_features].apply(stats.zscore)
-        logging.info("Finished model-specific preprocessing.")
+        # Drop NaN values after processing
+        X, y = X.dropna(), y.dropna()
+
         return X, y
 
     def predict(self, X: pd.DataFrame, y: pd.DataFrame = None, save_results=False) -> np.ndarray:
@@ -79,22 +87,42 @@ class BaseRegressionModel:
         logging.info("Finished prediction.")
         return pred
 
-    def evaluate(self, save_results=False) -> Dict:
+    def evaluate(self, save_results=False, folds=5) -> Dict:
         """ Evaluate the model using mean squared error, r2 score and cross validation"""
         logging.info("Starting model evaluation...")
         X_train, X_test, y_train, y_test = self.train_split
 
-        pred = self.model.predict(X_test)
-        mse = mean_squared_error(y_test, pred)
-        r2, p_price = pearsonr(y_test, pred)
+        
+        # Cross-validation 
+        kf = KFold(n_splits=folds, shuffle=True, random_state=42)
+        cv_p_values = []
+        cv_r2_scores = []
+        preds = []
+        y_vals = []
+        for train_index, val_index in kf.split(self.X):
+            X_train_kf, X_val_kf = self.X.iloc[train_index], self.X.iloc[val_index]
+            y_train_kf, y_val_kf = self.y.iloc[train_index], self.y.iloc[val_index]
+            self.model.fit(X_train_kf, y_train_kf)
+            pred = self.model.predict(X_val_kf)
+            mse = mean_squared_error(y_val_kf, pred)
+            r, p = pearsonr(y_val_kf, pred)
+            r2 = r**2
+            cv_p_values.append(p)
+            cv_r2_scores.append(r2)
+            #preds.append(pred)
+            #y_vals.append(y_val_kf)
 
-        logging.info(f"{self.identifier} MSE: {mse}, R2: {r2}")
-        logging.info(f"{self.identifier} P_value: {p_price}")
+        #preds = np.concatenate(preds)
+        #y_vals = np.concatenate(y_vals)
+        avg_cv_mse = np.mean(cv_p_values)
+        avg_cv_r2 = np.mean(cv_r2_scores)
 
         metrics = {
-            'mse': mse,
-            'r2': r2,
-            'p_value': p_price
+            'mse': avg_cv_mse,
+            'r2': avg_cv_r2,
+            'p_value': p,
+            #'y_pred': preds,
+            #'y_test': y_vals
         }
         self.metrics = metrics
         metrics_df = pd.DataFrame([metrics])
@@ -158,12 +186,12 @@ class BaseRegressionModel:
         """ Plot feature importances"""
         results_df = pd.read_csv(f'{self.save_path}/{self.identifier}_results.csv')
         plt.figure(figsize=(10, 6))
-        plt.scatter(results_df['y_test'], results_df['y_pred'], alpha=0.5)
-        plt.plot([results_df['y_test'].min(), results_df['y_test'].max()], 
-                 [results_df['y_test'].min(), results_df['y_test'].max()], 
+        plt.scatter(self.metrics['y_test'], self.metrics['y_pred'], alpha=0.5)
+        plt.plot([self.metrics['y_test'].min(), self.metrics['y_test'].max()], 
+                 [self.metrics['y_test'].min(), self.metrics['y_test'].max()], 
                  color='red', linestyle='--', linewidth=2)
-        plt.text(results_df['y_test'].min(), 
-                results_df['y_pred'].max(), 
+        plt.text(self.metrics['y_test'].min(), 
+                self.metrics['y_pred'].max(), 
                 f'R^2: {self.metrics["r2"]:.2f}\nP-value: {self.metrics["p_value"]:.2e}', 
                 fontsize=12, 
                 verticalalignment='top', 
@@ -221,115 +249,3 @@ class RandomForestModel(BaseRegressionModel):
         self.model.fit(X_train, y_train)
         logging.info("Finished Random Forest model training.")
 
-if __name__ == "__main__":
-    logging.info("Script started")
-    folder_path = "/kaggle"
-    data_df = pd.read_csv(folder_path + "/input/datalit-dataset/city_listings_custom_feature.csv")
-    identifier_linear = "Berlin_prediction_Linear"
-    safe_path_linear = folder_path + "/working/" + identifier + "/"
-    identifier_rf = "Berlin_prediction_RandomForest"
-    safe_path_rf = folder_path + "/working/" + identifier + "/"
-    if not os.path.exists(safe_path_linear):
-        os.makedirs(safe_path_linear)
-    if not os.path.exists(safe_path_rf):
-        os.makedirs(safe_path_rf)
-        
-   Feature_Selection = {
-            'features': [
-                "host_response_rate",
-                "host_acceptance_rate",
-                "host_listings_count",
-                "host_total_listings_count",
-                #"latitude",
-                #"longitude",
-                "accommodates",
-                "bathrooms",
-                "bedrooms",
-                "beds",
-                "minimum_nights",
-                "maximum_nights",
-                "minimum_minimum_nights",
-                "maximum_minimum_nights",
-                "minimum_maximum_nights",
-                "maximum_maximum_nights",
-                "minimum_nights_avg_ntm",
-                "maximum_nights_avg_ntm",
-                "availability_30",
-                "availability_60",
-                "availability_90",
-                "availability_365",
-                "number_of_reviews",
-                "number_of_reviews_ltm",
-                "number_of_reviews_l30d",
-                "review_scores_rating",
-                "review_scores_accuracy",
-                "review_scores_cleanliness",
-                "review_scores_checkin",
-                "review_scores_communication",
-                "review_scores_location",
-                "review_scores_value",
-                "calculated_host_listings_count",
-                "calculated_host_listings_count_entire_homes",
-                "calculated_host_listings_count_private_rooms",
-                "calculated_host_listings_count_shared_rooms",
-                "reviews_per_month",
-                "distance_to_city_center",
-                "average_review_length",
-                "spelling_errors",
-                "host_profile_pic_people_visible",
-                "host_profile_pic_male_or_female",
-                "host_profile_pic_setting_indoor_outdoor",
-                "host_profile_pic_professionality",
-                "host_profile_pic_quality",
-                "aesthetic_score",
-               "picture_url_setting_indoor_outdoor",
-                "amount_of_amenities",
-                "berlin",
-                "barcelona",
-                "istanbul",
-                "london",
-                "oslo"
-
-            ],
-        
-            'target': 'price'
-        }
-
-    test_split_size = 0.2
-    RandomForest_Hparams = {
-        'n_estimators': 100,
-        'max_depth': 10,
-        'random_state': 42
-    }
-    n_top_features = 15
-
-    # Linear Regression Model
-    linear_model = LinearRegressionModel(
-        data_df, 
-        Feature_Selection, 
-        test_split_size, 
-        safe_path_linear, 
-        identifier_linear, 
-        n_top_features)
-    linear_model.fit()
-    linear_preds = linear_model.predict(linear_model.train_split[1], linear_model.train_split[3], save_results=True)
-    linear_metrics = linear_model.evaluate()
-    linear_importances = linear_model.feature_importance(10)
-    linear_model.plot()
-
-    # Random Forest Model
-    rf_model = RandomForestModel(
-        data_df, 
-        Feature_Selection, 
-        RandomForest_Hparams, 
-        test_split_size, 
-        safe_path_rf, 
-        identifier_rf, 
-        n_top_features)
-    rf_model.fit()
-    rf_preds = rf_model.predict(rf_model.train_split[1], rf_model.train_split[3], save_results=True)
-    rf_metrics = rf_model.evaluate()
-    rf_importances = rf_model.feature_importance(10)
-    rf_model.plot()
-
-    logging.info("Finished main execution.")
