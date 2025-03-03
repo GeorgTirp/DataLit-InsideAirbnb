@@ -1,6 +1,7 @@
 # DataLit-InsideAirbnb
 
 This repository contains data and code for analyzing Airbnb listings data, leveraging the [Inside Airbnb](http://insideairbnb.com/) dataset. The project is part of a Data Literacy or data science exercise, focusing on cleaning, exploring, modeling, and visualizing Airbnb data.
+You can find detailed documentation, interactive plots and the full results of our analysis on our own Website: [InsideAirBnB Documentation](https://georgtirp.github.io/DataLit-InsideAirbnb/)
 
 ## Table of Contents
 
