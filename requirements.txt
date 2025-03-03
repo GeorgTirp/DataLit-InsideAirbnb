@@ -1,0 +1,17 @@
+numpy
+pandas
+scikit-learn
+scipy
+matplotlib
+seaborn
+shap
+tqdm
+geopandas
+contextily
+shapely
+plotly
+osmnx
+torch
+delu
+tabpfn
+git+https://github.com/yandex-research/rtdl-revisiting-models.git
