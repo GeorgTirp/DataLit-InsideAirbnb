@@ -9,7 +9,7 @@ Data
 Overview of Data
 ----------------
 
-First a map of the used listings (may take a few seconds to load depending on you internet connection):
+First a map of the used listings (may take a few seconds to load depending on your internet connection):
 
 .. raw:: html
 
