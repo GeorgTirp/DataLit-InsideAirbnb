@@ -1,5 +1,3 @@
-
-
 # DataLit-InsideAirbnb
 
 This repository contains data and code for analyzing Airbnb listings data, leveraging the [Inside Airbnb](http://insideairbnb.com/) dataset. The project is part of a Data Literacy or data science exercise, focusing on cleaning, exploring, modeling, and visualizing Airbnb data.
@@ -38,13 +36,13 @@ The **DataLit-InsideAirbnb** project aims to:
 ```
 DataLit-InsideAirbnb
 │
-├── preprocessing/
-│   ├── preprocessing.py             # Script for data aggregation, cleaning, imputation etc.             
-│   └── ...
-│
 ├── models/
 │   ├── base_regression.py/          # Models for price prediction
 │   ├── TabPFN.py                    
+│   └── ...
+│
+├── preprocessing/
+│   ├── preprocessing.py             # Script for data aggregation, cleaning, imputation etc.             
 │   └── ...
 │
 ├── results/
