@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Inside AirBnB
-=============
+AirBnB Price Analysis
+=====================
 
 This project aims to explore and predict the price of Airbnb listings based on various attributes. With over 7.7 million listings across more than 100,000 cities worldwide, Airbnb is a key player in the global short-term and vacation rental market, generating \$9.9 billion in revenue in 2023. The platform allows property owners to list their homes, while users browse and book accommodations based on their preferences.
 
