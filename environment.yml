@@ -1,0 +1,26 @@
+name: datalit_airbnb
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - pip
+  - numpy
+  - pandas
+  - scikit-learn
+  - scipy
+  - matplotlib
+  - seaborn
+  - shap
+  - tqdm
+  - geopandas
+  - contextily
+  - shapely
+  - plotly
+  - osmnx
+  - pytorch     # CPU version; for GPU, see PyTorch docs for appropriate channel/cudatoolkit
+  - pip:
+    - delu
+    - tabpfn
+    # The rtdl "revisiting models" package is not on PyPI; install directly from GitHub:
+    - git+https://github.com/yandex-research/rtdl-revisiting-models.git
