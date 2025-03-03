@@ -153,7 +153,6 @@ Contributions, suggestions, and improvements are welcome!
 
 Unless otherwise specified, this project is licensed under the [MIT License](LICENSE). See [LICENSE](LICENSE) for details.
 
-*(If you use Inside Airbnb data, be mindful of any relevant data usage agreements or licenses.)*
 
 ---
 
