@@ -20,13 +20,12 @@ import logging
 import asyncio
 import aiohttp
 from concurrent.futures import ThreadPoolExecutor
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 import sys 
 import gc
 import asyncio
 import aiohttp
-#sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-#from models.add_custom_features import AddCustomFeatures
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 
 
 class ImageDownloader:
@@ -112,8 +111,6 @@ class ImageDownloader:
                 logging.info(f"Finished downloading images for {city} - {image_url_col_name}")
 
 
-
-DEBUG_MODE = False
 
 class InsideAirbnbDataset:
     """
@@ -314,9 +311,6 @@ class InsideAirbnbDataset:
         median_value = all_cities_listings['beds'].dropna().median()
         all_cities_listings['beds'].fillna(value=median_value, inplace=True)
 
-        #  'first_review'     --> leave out listings without reviews (only include listings which include reviews which indicates that listings are booked and price is valid)
-        #   .....
-        #  'reviews_per_mon'  --> leave out listings without reviews (only include listings which include reviews which indicates that listings are booked and price is valid)
         review_columns = [
                 'first_review', 
                 'review_scores_rating', 
@@ -328,24 +322,7 @@ class InsideAirbnbDataset:
                 'review_scores_value', 
                 'reviews_per_month'
             ]
-        #if include_only_reviewed:
-        #    all_cities_listings = all_cities_listings[all_cities_listings['first_review'].notna()]
-        #    for review_col in review_columns:
-        #        assert not all_cities_listings[review_col].isna().any()
-        #else:
-        #    # since I could not think of an sensible imputation strategy
-        #    all_cities_listings.drop(columns = review_columns)
-        #
-        #NLP NaN:
-        #  'name'                   --> embedding of empty string ""
-        #  'description'            --> embedding of empty string ""
-        #  'neighborhood_overview'  --> embedding of empty string ""
-        #  'host_about'             --> embedding of empty string ""
-        # --> these are handled in the add_nlp_embedding function
-    
-        #  'comments'             --> embedding of empty string ""
-        # --> handled in the _integrate_reviews_into_listings function
-
+        
         self.all_cities_listings = all_cities_listings
         
     
