@@ -10,6 +10,13 @@ Here is the comparison of model performances across the different models used.
    :alt: Model Comparison
    :align: center
 
+Inferencetime comparison:
+
+
+.. image:: /_static/barplot_models.png
+   :alt: Model Comparison
+   :align: center
+
 XGBoost Regressor Performance and Feature Importance
 ----------------------------------------------------
 
