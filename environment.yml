@@ -22,5 +22,7 @@ dependencies:
   - pip:
     - delu
     - tabpfn
+    - transformers
+    - aiohttp
     # The rtdl "revisiting models" package is not on PyPI; install directly from GitHub:
     - git+https://github.com/yandex-research/rtdl-revisiting-models.git
