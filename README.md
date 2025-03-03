@@ -1,6 +1,4 @@
-Below is a sample `README.md` that you could include in your GitHub repo. Feel free to adjust any sections or wording to best reflect your project’s specifics and style.
 
----
 
 # DataLit-InsideAirbnb
 
