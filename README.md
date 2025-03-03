@@ -38,6 +38,10 @@ The **DataLit-InsideAirbnb** project aims to:
 ```
 DataLit-InsideAirbnb
 │
+├── preprocessing/
+│   ├── preprocessing.py             # Script for data aggregation, cleaning, imputation etc.             
+│   └── ...
+│
 ├── models/
 │   ├── base_regression.py/          # Models for price prediction
 │   ├── TabPFN.py                    
@@ -50,7 +54,7 @@ DataLit-InsideAirbnb
 │
 ├── visualization/
 │   ├── plot_model_bench.py
-│   ├── visualization.ipynb
+│   ├── price_difference_maps.ipynb  # Geospatial visualization of prediction errors
 │   └── ...
 │
 ├── environment.yml        # Conda environment (optional)
@@ -111,7 +115,11 @@ For a full demo with our dataset, our models, and the model benchmark, see our k
 Below are some common workflows:
 
 1. **Data Cleaning**:  
-   ???
+   - Aggregation of available data sources useful for prediction (`listings.csv` & `reviews.csv`)
+   - Fast image downloading using asynchronous libraries (`asyncio` & `aiohttp`)
+   - Data cleaning, imputation, currency conversion etc.
+   - Feature embeddings for structured data such as images & text (for tabular regression models)
+   - Flexible and easy to use data read-in & saving methods for further preprocessing
 
 2. **Exploratory Analysis**:  
    - Open the Kaggle notebook to copy and edit to use GPU resources as some of the models can be intractable for CPU.
@@ -119,7 +127,7 @@ Below are some common workflows:
 
 3. **Visualization**:  
    - Look at the generated plots in `results/` or in the notebooks.
-   - The script `visualization/` (if it exists) may produce advanced plots (e.g., raincloud plots).
+   - The folder `visualization/` contains scripts that produce advanced plots (e.g. prediction error maps).
 
 ---
 
@@ -153,9 +161,11 @@ Unless otherwise specified, this project is licensed under the [MIT License](LIC
 
 ## Contact
 
-For questions, comments, or collaboration, you can reach me at:
+For questions, comments, or collaboration, you can reach us at:
 - **Name**: Georg Tirpitz  
 - **GitHub**: [@GeorgTirp](https://github.com/GeorgTirp)
+- **Name**: Nils Klute  
+- **GitHub**: [@NilsKlute](https://github.com/NilsKlute)
 
 Feel free to open an [issue](https://github.com/GeorgTirp/DataLit-InsideAirbnb/issues) on GitHub if you encounter any problems or have feature requests.
 
