@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zoomable Image Example</title>
+    <link href="https://unpkg.com/viewerjs/dist/viewer.css" rel="stylesheet">
+    <script src="https://unpkg.com/viewerjs/dist/viewer.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .image-container {
+            display: inline-block;
+            cursor: zoom-in;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Zoomable Image Example</h1>
+<p>Click on the image to zoom in.</p>
+
+<!-- Container for the image -->
+<div class="image-container">
+    <img id="zoomable-image" src="path/to/your/image.jpg" alt="Zoomable Image" width="500" />
+</div>
+
+<script>
+    // Initialize the Viewer.js on the image
+    var image = document.getElementById('zoomable-image');
+    var viewer = new Viewer(image, {
+        inline: true,
+        viewed() {
+            viewer.zoomTo(1);  // Optional: initial zoom level (1 = original size)
+        }
+    });
+</script>
+
+</body>
+</html>

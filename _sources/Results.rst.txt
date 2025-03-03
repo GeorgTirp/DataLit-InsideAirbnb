@@ -24,3 +24,10 @@ Additionally, we provide a plot that illustrates the feature importance for the 
 .. image:: _static/feature_importances_plot.png
    :alt: XGBoost Feature Importance
    :align: center
+
+Finnaly the fainess map of the listings in London
+--------------------------------------------------
+
+.. raw:: html
+
+   <a href="_static/zoomable_fairness_map.html.html" target="_blank">Click here to see the neighboorhoods in london with fair/unfair AirBnB prices</a>
