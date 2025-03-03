@@ -13,8 +13,24 @@ The dataset used in this project includes a wealth of information about Airbnb l
 
 The primary data sources are the `listings.csv` and `reviews.csv` files, which contain key features related to price prediction. All relevant data for our analysis comes from these two files.
 
+Full Preprocessed Data
+----------------------
+
+For further exploration of the dataset, we provide a detailed report containing all the preprocessed data. You can view the full report in an interactive format.
+
+.. raw:: html
+
+   <iframe src="_static/full_data_report.html" width="100%" height="600px"></iframe>
+
+If you wish to download the raw preprocessed data for further analysis, you can access it below:
+
+- `Download Preprocessed Data (CSV format)`_
+
+.. _Download Preprocessed Data (CSV format): https://e.pcloud.link/publink/show?code=XZaT2lZLTSwsf5pFEVdd3clrLgpYH6u6Fgk
+
+
 Data Scraping and Preprocessing
-------------------------------
+-------------------------------
 
 The data for each city is scraped from the Airbnb website and then preprocessed using the popular **pandas** framework. Below is an overview of the preprocessing steps followed in the analysis:
 
@@ -47,7 +63,7 @@ In addition to the structured data available in the `listings.csv` and `reviews.
 .. list-table:: Custom Features Engineered for Property Listings
    :widths: 20 80
    :header-rows: 1
-   :align: center
+   :align: left
 
    * - **Feature**
      - **Description**
@@ -66,18 +82,4 @@ In addition to the structured data available in the `listings.csv` and `reviews.
 
 These features provide additional insights into the listings that are not directly present in the raw data but are crucial for building more robust predictive models.
 
-Full Preprocessed Data
-----------------------
-
-For further exploration of the dataset, we provide a detailed report containing all the preprocessed data. You can view the full report in an interactive format.
-
-.. raw:: html
-
-   <iframe src="_static/european_cities_report.html" width="100%" height="600px"></iframe>
-
-If you wish to download the raw preprocessed data for further analysis, you can access it below:
-
-- `Download Preprocessed Data (CSV format)`_
-
-.. _Download Preprocessed Data (CSV format): /path/to/preprocessed_data.csv
 

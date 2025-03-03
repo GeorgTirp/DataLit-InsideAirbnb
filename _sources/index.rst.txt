@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Airbnb Price Prediction Analysis
-===============================
+Inside AirBnB
+=============
 
 This project aims to explore and predict the price of Airbnb listings based on various attributes. With over 7.7 million listings across more than 100,000 cities worldwide, Airbnb is a key player in the global short-term and vacation rental market, generating \$9.9 billion in revenue in 2023. The platform allows property owners to list their homes, while users browse and book accommodations based on their preferences.
 
@@ -12,7 +12,7 @@ While Airbnb simplifies property rentals for hosts and users, determining the op
 
 In this project, we analyze data from the InsideAirbnb project, which includes detailed information on over 100,000 listings across five European cities. Our goal is to provide valuable insights on price predictions by examining factors such as property features, location, and local demand. We start by preprocessing the data for consistency, then build predictive models using explainable features. We evaluate the accuracy of these models and compare the predicted prices to actual prices, helping both hosts and users make more informed decisions.
 
-.. image:: _static/AirBnBimage.png
+.. image:: _static/AirBnBuben.png
    :alt: Airbnb Pricing Analysis
    :width: 400px
    :align: center

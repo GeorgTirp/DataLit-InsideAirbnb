@@ -33,13 +33,17 @@ SHAP (Shapley Additive Explanations) values are based on Shapley values from coo
 ### Why SHAP?
 
 - **Model Agnostic**: SHAP values are compatible with any model, which allows for direct comparisons between different models.
+  
 - **Computationally Tractable**: SHAP is efficient, requiring only one training run to compute feature contributions.
+  
 - **Local Interpretability**: SHAP values offer an explanation of individual predictions, helping us to understand specific cases.
 
 ### Model-Specific SHAP Explainers
 
 - **Kernel SHAP**: The kernel-based SHAP explainer is model-agnostic but struggles to model feature interactions and can fail when features are correlated.
+  
 - **Tree SHAP**: Random Forest and XGBoost are compatible with the tree explainer, which models feature interactions more accurately by leveraging model-specific characteristics.
+  
 - **Deep SHAP**: The deep SHAP explainer is useful for neural networks but is not compatible with TabPFN and FT-Transformer, as they do not backpropagate or violate SHAP's additivity constraint.
 
 ### Choice of Explainable Models
@@ -57,9 +61,15 @@ Feature Importance with SHAP
 The SHAP values provide insights into how the features influence the model’s predictions. In this section, we describe the SHAP-based feature importance for the XGBoost model, highlighting the top features that contribute most to the prediction of Airbnb listing prices.
 
 For example:
-- **Distance to City Center**: Listings closer to the city center generally command higher prices.
-- **CLIP Prompt Features**: The visual quality of images, as measured by CLIP cosine similarity, has a strong impact on listing prices.
-- **Review Count**: Listings with higher numbers of reviews tend to have a more established reputation, often correlating with higher prices.
+- **Distance to City Center**:  
+  Listings closer to the city center generally command higher prices.
+
+- **CLIP Prompt Features**:  
+  The visual quality of images, as measured by CLIP cosine similarity, has a strong impact on listing prices.
+
+- **Review Count**:  
+  Listings with higher numbers of reviews tend to have a more established reputation, often correlating with higher prices.
+
 
 Further details on the SHAP values for other models and additional analysis can be found in the results section.
 

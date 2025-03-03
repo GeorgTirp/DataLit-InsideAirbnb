@@ -15,7 +15,7 @@
 <link href="search.html" rel="search" title="Search"/>
 <link href="genindex.html" rel="index" title="Index"/>
 <link href="Models.html" rel="next" title="Models"/>
-<link href="index.html" rel="prev" title="Airbnb Price Prediction Analysis"/>
+<link href="index.html" rel="prev" title="Inside AirBnB"/>
 <script>
     <!-- Prevent Flash of wrong theme -->
       const userPreference = localStorage.getItem('darkMode');
@@ -104,6 +104,14 @@
 <p>The dataset used in this project includes a wealth of information about Airbnb listings, including details about prices, accommodations, hosts, images, reviews, and other useful attributes. Given the constraints of limited computing resources, we focus on five European cities: Berlin, Barcelona, London, Oslo, and Istanbul. This results in a dataset containing a substantial number of listings.</p>
 <p>The primary data sources are the <cite>listings.csv</cite> and <cite>reviews.csv</cite> files, which contain key features related to price prediction. All relevant data for our analysis comes from these two files.</p>
 </section>
+<section id="full-preprocessed-data">
+<h2>Full Preprocessed Data<a class="headerlink" href="#full-preprocessed-data" title="Link to this heading" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#full-preprocessed-data'">¶</a></h2>
+<p>For further exploration of the dataset, we provide a detailed report containing all the preprocessed data. You can view the full report in an interactive format.</p>
+<iframe height="600px" src="_static/full_data_report.html" width="100%"></iframe><p>If you wish to download the raw preprocessed data for further analysis, you can access it below:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://e.pcloud.link/publink/show?code=XZaT2lZLTSwsf5pFEVdd3clrLgpYH6u6Fgk">Download Preprocessed Data (CSV format)</a></p></li>
+</ul>
+</section>
 <section id="data-scraping-and-preprocessing">
 <h2>Data Scraping and Preprocessing<a class="headerlink" href="#data-scraping-and-preprocessing" title="Link to this heading" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#data-scraping-and-preprocessing'">¶</a></h2>
 <p>The data for each city is scraped from the Airbnb website and then preprocessed using the popular <strong>pandas</strong> framework. Below is an overview of the preprocessing steps followed in the analysis:</p>
@@ -126,7 +134,7 @@
 <section id="feature-engineering">
 <h2>Feature Engineering<a class="headerlink" href="#feature-engineering" title="Link to this heading" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#feature-engineering'">¶</a></h2>
 <p>In addition to the structured data available in the <cite>listings.csv</cite> and <cite>reviews.csv</cite> files, we also extract custom features from unstructured data sources such as images and text. The table below summarizes the key features engineered for the analysis:</p>
-<table class="docutils align-center" id="id1">
+<table class="docutils align-left" id="id1">
 <caption><span class="caption-text">Custom Features Engineered for Property Listings</span><a class="headerlink" href="#id1" title="Link to this table">¶</a></caption>
 <colgroup>
 <col style="width: 20.0%"/>
@@ -160,22 +168,14 @@
 </table>
 <p>These features provide additional insights into the listings that are not directly present in the raw data but are crucial for building more robust predictive models.</p>
 </section>
-<section id="full-preprocessed-data">
-<h2>Full Preprocessed Data<a class="headerlink" href="#full-preprocessed-data" title="Link to this heading" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#full-preprocessed-data'">¶</a></h2>
-<p>For further exploration of the dataset, we provide a detailed report containing all the preprocessed data. You can view the full report in an interactive format.</p>
-<iframe height="600px" src="_static/european_cities_report.html" width="100%"></iframe><p>If you wish to download the raw preprocessed data for further analysis, you can access it below:</p>
-<ul class="simple">
-<li><p><a class="reference external" href="/path/to/preprocessed_data.csv">Download Preprocessed Data (CSV format)</a></p></li>
-</ul>
-</section>
 </section>
 </div></div><aside class="hidden text-sm xl:block" id="right-sidebar">
 <div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
 <ul>
 <li><a :data-current="activeSection === '#overview-of-data'" class="reference internal" href="#overview-of-data">Overview of Data</a></li>
+<li><a :data-current="activeSection === '#full-preprocessed-data'" class="reference internal" href="#full-preprocessed-data">Full Preprocessed Data</a></li>
 <li><a :data-current="activeSection === '#data-scraping-and-preprocessing'" class="reference internal" href="#data-scraping-and-preprocessing">Data Scraping and Preprocessing</a></li>
 <li><a :data-current="activeSection === '#feature-engineering'" class="reference internal" href="#feature-engineering">Feature Engineering</a></li>
-<li><a :data-current="activeSection === '#full-preprocessed-data'" class="reference internal" href="#full-preprocessed-data">Full Preprocessed Data</a></li>
 </ul>
 </div>
 </aside>
