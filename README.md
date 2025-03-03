@@ -115,7 +115,7 @@ Below are some common workflows:
 
 2. **Exploratory Analysis**:  
    - Open the Kaggle notebook to copy and edit to use GPU resources as some of the models can be intractable for CPU.
-   - Execute cells to visualize and explore the dataset.
+   - Execute cells to run models and explore the dataset.
 
 3. **Visualization**:  
    - Look at the generated plots in `results/` or in the notebooks.
