@@ -166,4 +166,3 @@ Feel free to open an [issue](https://github.com/GeorgTirp/DataLit-InsideAirbnb/i
 
 ---
 
-*Happy analyzing!*
