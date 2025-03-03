@@ -67,7 +67,7 @@ DataLit-InsideAirbnb
 ---
 
 ## Getting Started
-For a full demo with our dataset, our models, and the model benchmark, see our kaggle notebook: https://www.kaggle.com/datasets/georgtirpitz/datalit-dataset.
+For a full demo with our dataset, our models, and the model benchmark, see our kaggle notebook: [https://www.kaggle.com/datasets/georgtirpitz/datalit-dataset](https://www.kaggle.com/code/georgtirpitz/datalit-models/).
 ### Prerequisites
 
 - Python 3.8+ (or a version specified in `environment.yml` / `requirements.txt`)
