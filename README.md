@@ -1,133 +1,166 @@
+Below is a sample `README.md` that you could include in your GitHub repo. Feel free to adjust any sections or wording to best reflect your project’s specifics and style.
+
+---
+
 # DataLit-InsideAirbnb
 
-Inside Airbnb
+This repository contains data and code for analyzing Airbnb listings data, leveraging the [Inside Airbnb](http://insideairbnb.com/) dataset. The project is part of a Data Literacy or data science exercise, focusing on cleaning, exploring, modeling, and visualizing Airbnb data.
 
-TODO:
-Forschungsfrage formulieren
-Data Preprocessing
-Feature Engineering
-Model Selection
-Explainability Methods
-Visualisation of results
+## Table of Contents
 
-## To push results to the website:
-1. Use naming convention in Munich_Results
-2. Go to DATALIT-INSIDEAIRBNB
-3. `make html`
-4. `ghp-import -n -p build/html`
-5. Website at: [Inside AirBnBuben](https://georgtirp.github.io/DataLit-InsideAirbnb/Results.html#xgboost-regressor-linearregression)
+- [Project Overview](#project-overview)
+- [Repository Structure](#repository-structure)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Data](#data)
+- [Usage](#usage)
+- [Results](#results)
+- [Contributing](#contributing)
+- [License](#license)
+- [Contact](#contact)
 
+---
 
-$\textbf{Forschungsfrage:}$
+## Project Overview
 
-- Preis pro Nacht pro Person
-- Chance of reservation in gewissem Zeitintervall
-- Einfluss verschiedener Faktoren auf Preisgestaltung
-- Eingrenzung auf wenige Städte
-- Unterschiede bzgl. Wichtigkeit verschiedener Features im Städtevergleich / Jahreszeitvergleich
-
-
-$\textbf{Data Preprocessing:}$
-- Auswahl der Tabellen für Vorhersage (Links für Tabellen zu Berlin; Data Documentation)
-- listings.csv.gz 
-- calendar.csv.gz
-- reviews.csv.gz
-- Neighbourhoods.csv
-- Neighbourhoods.geojson
-- Auswahl der Features in einzelnen Tabellen für Vorhersage
-- Continuous data
-- Categorical data → one hot encoding?
-- NLP data → LLM sentiment feature embedding?
-- Image links → downloading images? Embedding?
-- Dates 
-- Umwandlung der listings.csv in richtiges csv format
-- data is raw
-- buggy zeilenumbrüche in Beschreibungen
-  umwandeln, sodass eine Zeile einem listing eintrag entspricht
+The **DataLit-InsideAirbnb** project aims to:
+1. **Collect** Airbnb data from [Inside Airbnb](http://insideairbnb.com/).
+2. **Clean** and preprocess the data for analysis.
+3. **Explore** and visualize key insights about Airbnb listings, hosts, and reviews.
+4. **Model** relationships (e.g., predicting prices).
+5. **Evaluate** model performance and compare different modeling approaches.
 
 
 
-$\textbf{Feature Engineering:}$
-- verschiedene Features sind in Natural Language
-- listings.csv
-- name
-- description
-- Neighbourhood_overview
-- Host_about
-- Bathrooms_text
-- reviews.csv
-- comments
-- general ideas:
-- listings.csv
-- individual feature embedding for each categories in listings.csv or
-  aggregation of individual NLP texts for one summary embedding of the text
-- reviews.csv
-- aggregation of all reviews for specific listing and sentiment analysis?
+---
 
+## Repository Structure
 
-$\textbf{Model Selection / Statistics}$
-- PCA of features
-- Linear Regression Baseline
-- which features to use for baseline model (all including NLP embeddings?)
-- regularisation? cross-validation?
-- Random Forest Regression
-- XGBoost
-- Kernel Methods
-- AutoML in tabular data for ensembling different models → more robust predictions?
-- Maybe kleines NN testen wenn viel Zeit
-- Clustering w.r.t feature attribution
-- Cross validation to check models
-- Rand index to check distinctness off clusters
-- Classification to check clustering
-- (?) Finding appropriate test-statistics
+```
+DataLit-InsideAirbnb
+│
+├── models/
+│   ├── base_regression.py/          # Models for price prediction
+│   ├── TabPFN.py                    
+│   └── ...
+│
+├── results/
+│   ├── Model_benchmark/
+│   │   └── model_comparison_fixed_r.csv
+│   └── ...
+│
+├── visualization/
+│   ├── plot_model_bench.py
+│   ├── visualization.ipynb
+│   └── ...
+│
+├── environment.yml        # Conda environment (optional)
+├── requirements.txt       # Python dependencies (if using pip)
+├── README.md              # This README
+└── ...
+```
 
+- **models**: All used models for prediction and code for model benchmarking.
+- **results/**: Outputs such as figures, metrics, model comparison files, etc.
+- **source/**: ???
+- **environment.yml / requirements.txt**: Environment or package requirements.
 
-Caution: some models like XGBoost can handle categorical data well (no need for one-hot encoding) some like standard linear regression need more preprocessing)
+---
 
+## Getting Started
+For a full demo with our dataset, our models, and the model benchmark, see our kaggle notebook: https://www.kaggle.com/datasets/georgtirpitz/datalit-dataset.
+### Prerequisites
 
-$\textbf{Explainability Methods}$
-- Feature Attribution
-- which factors contribute most to the price prediction?
-- methods for extracting feature attribution in tabular data?
-- are methods intrinsically interpretable (like sparse linear models)?
-- SHAP value for XGBoost
-- Integrated Gradient for NNs or other gradient-based methods
-- Random Forest is explainable by nature
-- For Black-Box NLP maybe GEEX algorithm (more complicated)
-- measuring feature importance by removing individual features at inference time and measuring accuracy decrease
-- imputation strategy: NaN, zero, mean, median?
+- Python 3.8+ (or a version specified in `environment.yml` / `requirements.txt`)
+- Common data science libraries:  
+  - `pandas`  
+  - `numpy`  
+  - `matplotlib`  
+  - `seaborn`  
+  - `scikit-learn` (for modeling)  
+  - …and others as listed in your environment file.
 
+### Installation
 
-$\textbf{Limitations}$
-- Models
-- which models make which assumptions → are they met in our scenario
-- Soundness of evaluation methods
-- Do test statistics make sense
-- Discuss interpretability of SHAP, GEEX, and integrated gradients
-- Think about biases in the data
-- Reliableness of NLP analysis of text
-- Stability of general prizing
-- Correct for inflation (might be distinct for some regions)
-- Correct for differences in currencies
+1. **Clone** this repository:
+   ```bash
+   git clone https://github.com/GeorgTirp/DataLit-InsideAirbnb.git
+   cd DataLit-InsideAirbnb
+   ```
 
+2. **Install dependencies**:
 
+   - Using `conda` (if you have an `environment.yml`):
+     ```bash
+     conda env create -f environment.yml
+     conda activate datalit_airbnb
+     ```
+   - Or using `pip` (if you have a `requirements.txt`):
+     ```bash
+     pip install -r requirements.txt
+     ```
 
+### Data
 
-Auf https://insideairbnb.com/get-the-data/ finden sich aktuelle Daten zu Übernachtungsangeboten in verschiedenen Städten/Ländern
-Price per Night prediction
-Chance of reservation prediction
-Eingrenzung auf gewisse Stadt/Städte und Vergleich der gewichtikeit gewisser Features über Städte hinweg
-Großes Pro: Daten sind einfach verfügbar, müssen nur heruntergleaden werden
+- **Inside Airbnb data** The fully preprocessed data also be found on kaggle as uploaded dataset: https://www.kaggle.com/datasets/georgtirpitz/datalit-dataset
+- Run any data-cleaning or preprocessing scripts (see `scripts/data_cleaning.py` or the relevant notebook) to generate the preprocessed data.
 
-Welche Features beeinflussen den Preis?
-Wie unterscheidet sich der Einfluss der Features in verschiedenen Regionen, Ländern, …?
-Wie unterscheidet sich der Einfluss der Features in verschiedenen Jahreszeiten?
-Währungsverhältnisse? Woher kommt der Tourist und wo bucht er?
-…
+---
 
+## Usage
 
+Below are some common workflows:
 
+1. **Data Cleaning**:  
+   ???
 
+2. **Exploratory Analysis**:  
+   - Open the Kaggle notebook to copy and edit to use GPU resources as some of the models can be intractable for CPU.
+   - Execute cells to visualize and explore the dataset.
 
+3. **Visualization**:  
+   - Look at the generated plots in `results/` or in the notebooks.
+   - The script `scripts/plotting.py` (if it exists) may produce advanced plots (e.g., raincloud plots).
 
+---
 
+## Results
+
+- **Model Performance**:  
+  - `results/Model_benchmark/model_comparison.csv` compares R² scores or other metrics across different models.  
+  - Figures (e.g., `.png` or `.pdf`) for model comparison are stored in `results/`.
+
+- **Analysis Findings**:  
+  - Any discussion of the findings and our methods can be found in the written report.
+
+---
+
+## Contributing
+
+Contributions, suggestions, and improvements are welcome!  
+1. **Fork** this repository.  
+2. **Create** a new branch for your feature or bugfix.  
+3. **Submit** a pull request describing your changes.
+
+---
+
+## License
+
+Unless otherwise specified, this project is licensed under the [MIT License](LICENSE). See [LICENSE](LICENSE) for details.
+
+*(If you use Inside Airbnb data, be mindful of any relevant data usage agreements or licenses.)*
+
+---
+
+## Contact
+
+For questions, comments, or collaboration, you can reach me at:
+- **Name**: Georg Tirpitz  
+- **GitHub**: [@GeorgTirp](https://github.com/GeorgTirp)
+
+Feel free to open an [issue](https://github.com/GeorgTirp/DataLit-InsideAirbnb/issues) on GitHub if you encounter any problems or have feature requests.
+
+---
+
+*Happy analyzing!*
