@@ -30,4 +30,4 @@ Finnaly the fainess map of the listings in London
 
 .. raw:: html
 
-   <a href="_static/zoomable_fairness_map.html.html" target="_blank">Click here to see the neighborhoods in london with fair/unfair AirBnB prices</a>
+   <a href="_static/zoomable_fairness_map.html" target="_blank">Click here to see the neighborhoods in london with fair/unfair AirBnB prices</a>
