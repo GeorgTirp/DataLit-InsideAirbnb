@@ -62,13 +62,13 @@ The SHAP values provide insights into how the features influence the model’s p
 
 For example:
 - **Distance to City Center**:  
-  Listings closer to the city center generally command higher prices.
+Listings closer to the city center generally command higher prices.
 
 - **CLIP Prompt Features**:  
-  The visual quality of images, as measured by CLIP cosine similarity, has a strong impact on listing prices.
+The visual quality of images, as measured by CLIP cosine similarity, has a strong impact on listing prices.
 
 - **Review Count**:  
-  Listings with higher numbers of reviews tend to have a more established reputation, often correlating with higher prices.
+Listings with higher numbers of reviews tend to have a more established reputation, often correlating with higher prices.
 
 
 Further details on the SHAP values for other models and additional analysis can be found in the results section.

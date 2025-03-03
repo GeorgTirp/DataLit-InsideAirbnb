@@ -14,7 +14,7 @@ In this project, we analyze data from the InsideAirbnb project, which includes d
 
 .. image:: _static/AirBnBuben.png
    :alt: Airbnb Pricing Analysis
-   :width: 400px
+   :width: 600px
    :align: center
 
 .. toctree::
@@ -24,5 +24,3 @@ In this project, we analyze data from the InsideAirbnb project, which includes d
    Data
    Models
    Results
-   Insights
-   Future Work
