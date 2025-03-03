@@ -28,6 +28,6 @@ Additionally, we provide a plot that illustrates the feature importance for the 
 Finnaly the fainess map of the listings in London
 --------------------------------------------------
 
-.. image::_static/london.png
+.. image:: _static/london.png
    :alt: Price Plot on Map
    :align: center
