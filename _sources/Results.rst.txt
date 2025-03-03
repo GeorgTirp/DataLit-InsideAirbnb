@@ -15,12 +15,12 @@ XGBoost Regressor Performance and Feature Importance
 
 The performance of the XGBoost Regressor, showing the actual vs predicted values, is illustrated below.
 
-.. image:: results/XGBoost_all_european_cities_no_cv/XGBoost_all_european_cities_no_cv_actual_vs_predicted.png
+.. image:: _static/XGBoost_all_european_cities_no_cv_actual_vs_predicted.png
    :alt: XGBoost Performance
    :align: center
 
 Additionally, we provide a plot that illustrates the feature importance for the XGBoost model.
 
-.. image:: source/_static/feature_importances_plot.png
+.. image:: _static/feature_importances_plot.png
    :alt: XGBoost Feature Importance
    :align: center

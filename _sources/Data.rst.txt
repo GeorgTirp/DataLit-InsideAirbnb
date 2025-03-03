@@ -9,6 +9,13 @@ Data
 Overview of Data
 ----------------
 
+First a map of the used listings:
+
+.. raw:: html
+
+   <iframe src="_static/price_plot_on_map.html" width="100%" height="600px"></iframe>
+
+
 The dataset used in this project includes a wealth of information about Airbnb listings, including details about prices, accommodations, hosts, images, reviews, and other useful attributes. Given the constraints of limited computing resources, we focus on five European cities: Berlin, Barcelona, London, Oslo, and Istanbul. This results in a dataset containing a substantial number of listings.
 
 The primary data sources are the `listings.csv` and `reviews.csv` files, which contain key features related to price prediction. All relevant data for our analysis comes from these two files.
