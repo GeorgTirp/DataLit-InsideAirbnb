@@ -1,15 +1,65 @@
 .. InsideAirBnB documentation master file, created by
-   sphinx-quickstart on Sun Jan 19 22:00:56 2025.
+   sphinx-quickstart on Sun Mar 03 2025.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
 Models
 ======
 
+Overview of Models
+------------------
+
+We used multiple models with varying complexity levels to predict Airbnb listing prices. Below is an overview of the models selected for this project:
+
+1. **Linear Regression**: A standard linear regression model was chosen as the baseline for comparison with more sophisticated models. It represents the lowest complexity and is used for understanding the basic relationships between features and target variables.
+
+2. **Random Forest**: A parallel tree-building method based on bagging, Random Forest is an ensemble method that uses multiple decision trees to make predictions. It is a robust and widely used model, particularly for regression and classification tasks \citep{RandomForest}.
+
+3. **XGBoost**: XGBoost is a gradient-boosting decision tree algorithm that builds trees sequentially. It typically outperforms Random Forest in many applications and is known for its speed and accuracy \citep{Chen_2016}.
+
+4. **FT-Transformer**: The FT-Transformer is a transformer-based model designed for tabular data. It is trained directly on the dataset and claims to outperform gradient-boosted decision tree models, particularly when large amounts of data are available \citep{FTT}.
+
+5. **TabPFN**: TabPFN is a prior-fitted transformer network trained on synthetic datasets to learn a general inference function for tabular data. Unlike other models, TabPFN does not require further training but can make predictions with a single forward pass \citep{tabpfn}.
+
+Explainability with SHAP
+------------------------
+
+A key component of this study is to provide interpretability for the model predictions, especially to understand which features influence the price predictions. We focused on **SHAP values** as the method for model explainability, as it is model-agnostic and offers local interpretability of individual predictions.
+
+### What are SHAP Values?
+
+SHAP (Shapley Additive Explanations) values are based on Shapley values from cooperative game theory. SHAP values quantify the contribution of each feature to a model’s prediction by distributing the difference between the actual prediction and the average prediction fairly among all features \citep{shap}.
+
+### Why SHAP?
+
+- **Model Agnostic**: SHAP values are compatible with any model, which allows for direct comparisons between different models.
+- **Computationally Tractable**: SHAP is efficient, requiring only one training run to compute feature contributions.
+- **Local Interpretability**: SHAP values offer an explanation of individual predictions, helping us to understand specific cases.
+
+### Model-Specific SHAP Explainers
+
+- **Kernel SHAP**: The kernel-based SHAP explainer is model-agnostic but struggles to model feature interactions and can fail when features are correlated.
+- **Tree SHAP**: Random Forest and XGBoost are compatible with the tree explainer, which models feature interactions more accurately by leveraging model-specific characteristics.
+- **Deep SHAP**: The deep SHAP explainer is useful for neural networks but is not compatible with TabPFN and FT-Transformer, as they do not backpropagate or violate SHAP's additivity constraint.
+
+### Choice of Explainable Models
+
+Given the compatibility of Random Forest and XGBoost with the tree explainer, these models are prioritized when explainability is crucial for understanding feature importance.
+
 XGBoost Regressor
 -----------------
 
-An XGBoost Regressor model trained using a nested cross-validation.
-Additionally the features were explained using Shapley additive explanations (SHAP).
+The XGBoost Regressor was trained using nested cross-validation to optimize hyperparameters. This model was selected for its strong performance in regression tasks. After training, SHAP values were used to explain the model’s predictions, helping to identify the most important features driving price predictions.
 
+Feature Importance with SHAP
+----------------------------
+
+The SHAP values provide insights into how the features influence the model’s predictions. In this section, we describe the SHAP-based feature importance for the XGBoost model, highlighting the top features that contribute most to the prediction of Airbnb listing prices.
+
+For example:
+- **Distance to City Center**: Listings closer to the city center generally command higher prices.
+- **CLIP Prompt Features**: The visual quality of images, as measured by CLIP cosine similarity, has a strong impact on listing prices.
+- **Review Count**: Listings with higher numbers of reviews tend to have a more established reputation, often correlating with higher prices.
+
+Further details on the SHAP values for other models and additional analysis can be found in the results section.
 

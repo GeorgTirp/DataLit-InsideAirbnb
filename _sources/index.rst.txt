@@ -1,25 +1,28 @@
 .. InsideAirBnB documentation master file, created by
-   sphinx-quickstart on Sun Jan 19 22:00:56 2025.
+   sphinx-quickstart on Sun Mar 03 2025.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-InsideAirBnB documentation
-==========================
+Airbnb Price Prediction Analysis
+===============================
 
-A project to identify the important features predicting the price of an AirBnB listing.
-The project is based on the InsideAirBnB dataset, which is a collection of data from AirBnB listings in various cities around the world.
+This project aims to explore and predict the price of Airbnb listings based on various attributes. With over 7.7 million listings across more than 100,000 cities worldwide, Airbnb is a key player in the global short-term and vacation rental market, generating \$9.9 billion in revenue in 2023. The platform allows property owners to list their homes, while users browse and book accommodations based on their preferences.
 
-.. image:: _static/AirBnBuben.png
-   :alt: Alternate text
+While Airbnb simplifies property rentals for hosts and users, determining the optimal price for listings remains a challenge. Hosts must decide on a price that maximizes their profits while considering various property features and local market conditions. On the other hand, users seek better insights into pricing variations to make informed decisions.
+
+In this project, we analyze data from the InsideAirbnb project, which includes detailed information on over 100,000 listings across five European cities. Our goal is to provide valuable insights on price predictions by examining factors such as property features, location, and local demand. We start by preprocessing the data for consistency, then build predictive models using explainable features. We evaluate the accuracy of these models and compare the predicted prices to actual prices, helping both hosts and users make more informed decisions.
+
+.. image:: _static/AirBnBimage.png
+   :alt: Airbnb Pricing Analysis
    :width: 400px
    :align: center
-
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
    
-   Preprocessing
+   Data
    Models
    Results
-
+   Insights
+   Future Work

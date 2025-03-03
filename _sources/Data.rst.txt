@@ -1,15 +1,83 @@
 .. InsideAirBnB documentation master file, created by
-   sphinx-quickstart on Sun Jan 19 22:00:56 2025.
+   sphinx-quickstart on Sun Mar 03 2025.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
 Data
-======
+====
+
+Overview of Data
+----------------
+
+The dataset used in this project includes a wealth of information about Airbnb listings, including details about prices, accommodations, hosts, images, reviews, and other useful attributes. Given the constraints of limited computing resources, we focus on five European cities: Berlin, Barcelona, London, Oslo, and Istanbul. This results in a dataset containing a substantial number of listings.
+
+The primary data sources are the `listings.csv` and `reviews.csv` files, which contain key features related to price prediction. All relevant data for our analysis comes from these two files.
+
+Data Scraping and Preprocessing
+------------------------------
+
+The data for each city is scraped from the Airbnb website and then preprocessed using the popular **pandas** framework. Below is an overview of the preprocessing steps followed in the analysis:
+
+1. **Aggregation**: The reviews for each listing are aggregated into the main listings dataframe, ensuring that the most relevant information for price prediction is consolidated in one place.
+   
+2. **Concatenation**: If multiple cities are processed simultaneously, a new column is added to specify the city of each listing, and the dataframes are concatenated to form a unified dataset.
+
+3. **Data Cleaning**:
+   - **Dropping irrelevant columns**: We remove columns containing only `NaN` values or those considered metadata, which are not useful for price prediction.
+   - **Handling missing price data**: Listings with missing price information are dropped.
+   
+4. **Handling Missing Values**: The following imputation strategies are used to handle `NaN` values:
+   - **Binary variables**: `NaN` values are replaced with `False`.
+   - **Categorical variables**: A new category is added for missing values if the variable has more than two categories.
+   - **Numerical variables**: `NaN` values are imputed with the median, which is more robust to outliers.
+
+5. **One-Hot Encoding**: Categorical variables are one-hot encoded, as some machine learning models cannot handle them natively.
+
+6. **Currency Conversion**: Listing prices are originally in local currencies. To ensure comparability across cities, all prices are converted to US dollars (USD).
+
+7. **Image Handling**: Although images are not directly available in the dataset, they are referenced by URLs. These images are downloaded and saved using asynchronous libraries like **asyncio** and **aiohttp** to speed up the process.
+
+8. **Feature Extraction**: Images and reviews are not directly usable as input for tabular models. Thus, interpretable features are extracted from these sources, which are described below.
+
+Feature Engineering
+--------------------
+
+In addition to the structured data available in the `listings.csv` and `reviews.csv` files, we also extract custom features from unstructured data sources such as images and text. The table below summarizes the key features engineered for the analysis:
+
+.. list-table:: Custom Features Engineered for Property Listings
+   :widths: 20 80
+   :header-rows: 1
+   :align: center
+
+   * - **Feature**
+     - **Description**
+   * - Distance to City Center
+     - Measurement from listing location to centroid of all listings.
+   * - CLIP Prompt Features
+     - Normalized cosine similarity between listing images and two text categories.
+   * - Picture Aesthetics
+     - Visual quality score (1-10) assigned to listing photographs.
+   * - Description Typos
+     - Ratio of misspelled words to total words in property description.
+   * - Review Count
+     - Total number of reviews received by listing.
+   * - Amenity Count
+     - Total number of amenities offered by the property.
+
+These features provide additional insights into the listings that are not directly present in the raw data but are crucial for building more robust predictive models.
 
 Full Preprocessed Data
 ----------------------
 
+For further exploration of the dataset, we provide a detailed report containing all the preprocessed data. You can view the full report in an interactive format.
 
 .. raw:: html
 
    <iframe src="_static/european_cities_report.html" width="100%" height="600px"></iframe>
+
+If you wish to download the raw preprocessed data for further analysis, you can access it below:
+
+- `Download Preprocessed Data (CSV format)`_
+
+.. _Download Preprocessed Data (CSV format): /path/to/preprocessed_data.csv
+

@@ -14,6 +14,8 @@
 <link href="_static/theme.css?v=42baaae4" rel="stylesheet" type="text/css"/>
 <link href="search.html" rel="search" title="Search"/>
 <link href="genindex.html" rel="index" title="Index"/>
+<link href="Models.html" rel="next" title="Models"/>
+<link href="index.html" rel="prev" title="Airbnb Price Prediction Analysis"/>
 <script>
     <!-- Prevent Flash of wrong theme -->
       const userPreference = localStorage.getItem('darkMode');
@@ -69,8 +71,8 @@
 <div class="relative overflow-hidden md:overflow-auto my-4 md:my-0 h-[calc(100vh-8rem)] md:h-auto">
 <div class="overflow-y-auto h-full w-full relative pr-6"><nav class="table w-full min-w-full my-6 lg:my-8">
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="Preprocessing.html">Preprocessing</a></li>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Models.html">Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Results.html">Results</a></li>
 </ul>
@@ -97,13 +99,82 @@
 <div id="content" role="main">
 <section id="data">
 <h1>Data<a class="headerlink" href="#data" title="Link to this heading">¶</a></h1>
+<section id="overview-of-data">
+<h2>Overview of Data<a class="headerlink" href="#overview-of-data" title="Link to this heading" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#overview-of-data'">¶</a></h2>
+<p>The dataset used in this project includes a wealth of information about Airbnb listings, including details about prices, accommodations, hosts, images, reviews, and other useful attributes. Given the constraints of limited computing resources, we focus on five European cities: Berlin, Barcelona, London, Oslo, and Istanbul. This results in a dataset containing a substantial number of listings.</p>
+<p>The primary data sources are the <cite>listings.csv</cite> and <cite>reviews.csv</cite> files, which contain key features related to price prediction. All relevant data for our analysis comes from these two files.</p>
+</section>
+<section id="data-scraping-and-preprocessing">
+<h2>Data Scraping and Preprocessing<a class="headerlink" href="#data-scraping-and-preprocessing" title="Link to this heading" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#data-scraping-and-preprocessing'">¶</a></h2>
+<p>The data for each city is scraped from the Airbnb website and then preprocessed using the popular <strong>pandas</strong> framework. Below is an overview of the preprocessing steps followed in the analysis:</p>
+<ol class="arabic simple">
+<li><p><strong>Aggregation</strong>: The reviews for each listing are aggregated into the main listings dataframe, ensuring that the most relevant information for price prediction is consolidated in one place.</p></li>
+<li><p><strong>Concatenation</strong>: If multiple cities are processed simultaneously, a new column is added to specify the city of each listing, and the dataframes are concatenated to form a unified dataset.</p></li>
+<li><p><strong>Data Cleaning</strong>:
+- <strong>Dropping irrelevant columns</strong>: We remove columns containing only <cite>NaN</cite> values or those considered metadata, which are not useful for price prediction.
+- <strong>Handling missing price data</strong>: Listings with missing price information are dropped.</p></li>
+<li><p><strong>Handling Missing Values</strong>: The following imputation strategies are used to handle <cite>NaN</cite> values:
+- <strong>Binary variables</strong>: <cite>NaN</cite> values are replaced with <cite>False</cite>.
+- <strong>Categorical variables</strong>: A new category is added for missing values if the variable has more than two categories.
+- <strong>Numerical variables</strong>: <cite>NaN</cite> values are imputed with the median, which is more robust to outliers.</p></li>
+<li><p><strong>One-Hot Encoding</strong>: Categorical variables are one-hot encoded, as some machine learning models cannot handle them natively.</p></li>
+<li><p><strong>Currency Conversion</strong>: Listing prices are originally in local currencies. To ensure comparability across cities, all prices are converted to US dollars (USD).</p></li>
+<li><p><strong>Image Handling</strong>: Although images are not directly available in the dataset, they are referenced by URLs. These images are downloaded and saved using asynchronous libraries like <strong>asyncio</strong> and <strong>aiohttp</strong> to speed up the process.</p></li>
+<li><p><strong>Feature Extraction</strong>: Images and reviews are not directly usable as input for tabular models. Thus, interpretable features are extracted from these sources, which are described below.</p></li>
+</ol>
+</section>
+<section id="feature-engineering">
+<h2>Feature Engineering<a class="headerlink" href="#feature-engineering" title="Link to this heading" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#feature-engineering'">¶</a></h2>
+<p>In addition to the structured data available in the <cite>listings.csv</cite> and <cite>reviews.csv</cite> files, we also extract custom features from unstructured data sources such as images and text. The table below summarizes the key features engineered for the analysis:</p>
+<table class="docutils align-center" id="id1">
+<caption><span class="caption-text">Custom Features Engineered for Property Listings</span><a class="headerlink" href="#id1" title="Link to this table">¶</a></caption>
+<colgroup>
+<col style="width: 20.0%"/>
+<col style="width: 80.0%"/>
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p><strong>Feature</strong></p></th>
+<th class="head"><p><strong>Description</strong></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Distance to City Center</p></td>
+<td><p>Measurement from listing location to centroid of all listings.</p></td>
+</tr>
+<tr class="row-odd"><td><p>CLIP Prompt Features</p></td>
+<td><p>Normalized cosine similarity between listing images and two text categories.</p></td>
+</tr>
+<tr class="row-even"><td><p>Picture Aesthetics</p></td>
+<td><p>Visual quality score (1-10) assigned to listing photographs.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Description Typos</p></td>
+<td><p>Ratio of misspelled words to total words in property description.</p></td>
+</tr>
+<tr class="row-even"><td><p>Review Count</p></td>
+<td><p>Total number of reviews received by listing.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Amenity Count</p></td>
+<td><p>Total number of amenities offered by the property.</p></td>
+</tr>
+</tbody>
+</table>
+<p>These features provide additional insights into the listings that are not directly present in the raw data but are crucial for building more robust predictive models.</p>
+</section>
 <section id="full-preprocessed-data">
 <h2>Full Preprocessed Data<a class="headerlink" href="#full-preprocessed-data" title="Link to this heading" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#full-preprocessed-data'">¶</a></h2>
-<iframe height="600px" src="_static/european_cities_report.html" width="100%"></iframe></section>
+<p>For further exploration of the dataset, we provide a detailed report containing all the preprocessed data. You can view the full report in an interactive format.</p>
+<iframe height="600px" src="_static/european_cities_report.html" width="100%"></iframe><p>If you wish to download the raw preprocessed data for further analysis, you can access it below:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="/path/to/preprocessed_data.csv">Download Preprocessed Data (CSV format)</a></p></li>
+</ul>
+</section>
 </section>
 </div></div><aside class="hidden text-sm xl:block" id="right-sidebar">
 <div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
 <ul>
+<li><a :data-current="activeSection === '#overview-of-data'" class="reference internal" href="#overview-of-data">Overview of Data</a></li>
+<li><a :data-current="activeSection === '#data-scraping-and-preprocessing'" class="reference internal" href="#data-scraping-and-preprocessing">Data Scraping and Preprocessing</a></li>
+<li><a :data-current="activeSection === '#feature-engineering'" class="reference internal" href="#feature-engineering">Feature Engineering</a></li>
 <li><a :data-current="activeSection === '#full-preprocessed-data'" class="reference internal" href="#full-preprocessed-data">Full Preprocessed Data</a></li>
 </ul>
 </div>

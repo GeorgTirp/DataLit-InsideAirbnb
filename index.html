@@ -7,14 +7,14 @@
 <meta content="white" media="(prefers-color-scheme: light)" name="theme-color"/>
 <meta content="black" media="(prefers-color-scheme: dark)" name="theme-color"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
-<title>InsideAirBnB documentation | InsideAirBnB  documentation</title>
-<meta content="InsideAirBnB documentation | InsideAirBnB  documentation" property="og:title"/>
-<meta content="InsideAirBnB documentation | InsideAirBnB  documentation" name="twitter:title"/>
+<title>Airbnb Price Prediction Analysis | InsideAirBnB  documentation</title>
+<meta content="Airbnb Price Prediction Analysis | InsideAirBnB  documentation" property="og:title"/>
+<meta content="Airbnb Price Prediction Analysis | InsideAirBnB  documentation" name="twitter:title"/>
 <link href="_static/pygments.css?v=e72c8e07" rel="stylesheet" type="text/css"/>
 <link href="_static/theme.css?v=42baaae4" rel="stylesheet" type="text/css"/>
 <link href="search.html" rel="search" title="Search"/>
 <link href="genindex.html" rel="index" title="Index"/>
-<link href="Preprocessing.html" rel="next" title="Preprocessing"/>
+<link href="Data.html" rel="next" title="Data"/>
 <script>
     <!-- Prevent Flash of wrong theme -->
       const userPreference = localStorage.getItem('darkMode');
@@ -71,7 +71,7 @@
 <div class="overflow-y-auto h-full w-full relative pr-6"><nav class="table w-full min-w-full my-6 lg:my-8">
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="Preprocessing.html">Preprocessing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Data.html">Data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Models.html">Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Results.html">Results</a></li>
 </ul>
@@ -87,39 +87,46 @@
 <main class="relative py-6 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_300px]">
 <div class="w-full min-w-0 mx-auto">
 <div id="content" role="main">
-<section id="insideairbnb-documentation">
-<h1>InsideAirBnB documentation<a class="headerlink" href="#insideairbnb-documentation" title="Link to this heading">¶</a></h1>
-<p>A project to identify the important features predicting the price of an AirBnB listing.
-The project is based on the InsideAirBnB dataset, which is a collection of data from AirBnB listings in various cities around the world.</p>
-<a class="reference internal image-reference" href="_images/AirBnBuben.png"><img alt="Alternate text" class="align-center" src="_images/AirBnBuben.png" style="width: 400px;"/>
+<section id="airbnb-price-prediction-analysis">
+<h1>Airbnb Price Prediction Analysis<a class="headerlink" href="#airbnb-price-prediction-analysis" title="Link to this heading">¶</a></h1>
+<p>This project aims to explore and predict the price of Airbnb listings based on various attributes. With over 7.7 million listings across more than 100,000 cities worldwide, Airbnb is a key player in the global short-term and vacation rental market, generating $9.9 billion in revenue in 2023. The platform allows property owners to list their homes, while users browse and book accommodations based on their preferences.</p>
+<p>While Airbnb simplifies property rentals for hosts and users, determining the optimal price for listings remains a challenge. Hosts must decide on a price that maximizes their profits while considering various property features and local market conditions. On the other hand, users seek better insights into pricing variations to make informed decisions.</p>
+<p>In this project, we analyze data from the InsideAirbnb project, which includes detailed information on over 100,000 listings across five European cities. Our goal is to provide valuable insights on price predictions by examining factors such as property features, location, and local demand. We start by preprocessing the data for consistency, then build predictive models using explainable features. We evaluate the accuracy of these models and compare the predicted prices to actual prices, helping both hosts and users make more informed decisions.</p>
+<a class="reference internal image-reference" href="_static/AirBnBimage.png"><img alt="Airbnb Pricing Analysis" class="align-center" src="_static/AirBnBimage.png" style="width: 400px;"/>
 </a>
 <div class="toctree-wrapper compound">
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="Preprocessing.html">Preprocessing</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="Preprocessing.html#visualisation-of-the-prices">Visualisation of the prices:</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Preprocessing.html#visualisation-of-the-custom-features-distance-to-city-center">Visualisation of the custom features: Distance_to_city_center</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Data.html">Data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Data.html#overview-of-data">Overview of Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Data.html#data-scraping-and-preprocessing">Data Scraping and Preprocessing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Data.html#feature-engineering">Feature Engineering</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Data.html#full-preprocessed-data">Full Preprocessed Data</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="Models.html">Models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Models.html#overview-of-models">Overview of Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Models.html#explainability-with-shap">Explainability with SHAP</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Models.html#xgboost-regressor">XGBoost Regressor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Models.html#feature-importance-with-shap">Feature Importance with SHAP</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="Results.html">Results</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="Results.html#xgboost-regressor-berlin-linear">XGBoost Regressor Berlin_linear</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Results.html#xgboost-regressor-berlin-randomforest">XGBoost Regressor Berlin_randomforest</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Results.html#xgboost-regressor-berlin-tabpfn">XGBoost Regressor Berlin_tabpfn</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Results.html#xgboost-regressor-berlin-prediction-xgboost">XGBoost Regressor Berlin_prediction_xgboost</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Results.html#xgboost-regressor-berlin-with-custom-features-xgboost">XGBoost Regressor Berlin_with_custom_features_xgboost</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Results.html#xgboost-regressor-linearregression">XGBoost Regressor Linearregression</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Results.html#xgboost-regressor-munich-prediction">XGBoost Regressor Munich_prediction</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Results.html#xgboost-regressor-tokyo-prediction">XGBoost Regressor Tokyo_prediction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="Results.html#xgboost-regressor-xgboost-all-european-cities">XGBoost Regressor Xgboost_all_european_cities</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Results.html#xgboost-regressor-zurich-prediction">XGBoost Regressor Zurich_prediction</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Results.html#xgboost-regressor-test-ft-transformer">XGBoost Regressor Test_ft_transformer</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Results.html#xgboost-regressor-test-linearregression">XGBoost Regressor Test_linearregression</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Results.html#xgboost-regressor-test-randomforest">XGBoost Regressor Test_randomforest</a></li>
-<li class="toctree-l2"><a class="reference internal" href="Results.html#xgboost-regressor-test-run">XGBoost Regressor Test_run</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Results.html#xgboost-regressor-xgboost-all-european-cities-100-samples">XGBoost Regressor Xgboost_all_european_cities_100_samples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Results.html#xgboost-regressor-xgboost-all-european-cities-1138-samples">XGBoost Regressor Xgboost_all_european_cities_1138_samples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Results.html#xgboost-regressor-xgboost-all-european-cities-12961-samples">XGBoost Regressor Xgboost_all_european_cities_12961_samples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Results.html#xgboost-regressor-xgboost-all-european-cities-183-samples">XGBoost Regressor Xgboost_all_european_cities_183_samples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Results.html#xgboost-regressor-xgboost-all-european-cities-2091-samples">XGBoost Regressor Xgboost_all_european_cities_2091_samples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Results.html#xgboost-regressor-xgboost-all-european-cities-23809-samples">XGBoost Regressor Xgboost_all_european_cities_23809_samples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Results.html#xgboost-regressor-xgboost-all-european-cities-337-samples">XGBoost Regressor Xgboost_all_european_cities_337_samples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Results.html#xgboost-regressor-xgboost-all-european-cities-3841-samples">XGBoost Regressor Xgboost_all_european_cities_3841_samples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Results.html#xgboost-regressor-xgboost-all-european-cities-43735-samples">XGBoost Regressor Xgboost_all_european_cities_43735_samples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Results.html#xgboost-regressor-xgboost-all-european-cities-619-samples">XGBoost Regressor Xgboost_all_european_cities_619_samples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Results.html#xgboost-regressor-xgboost-all-european-cities-7056-samples">XGBoost Regressor Xgboost_all_european_cities_7056_samples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Results.html#xgboost-regressor-xgboost-all-european-cities-80336-samples">XGBoost Regressor Xgboost_all_european_cities_80336_samples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Results.html#xgboost-regressor-xgboost-all-european-cities-no-cv">XGBoost Regressor Xgboost_all_european_cities_no_cv</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Results.html#xgboost-regressor-model-benchmark">XGBoost Regressor Model_benchmark</a></li>
 </ul>
 </li>
 </ul>

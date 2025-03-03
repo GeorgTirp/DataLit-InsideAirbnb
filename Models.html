@@ -15,7 +15,7 @@
 <link href="search.html" rel="search" title="Search"/>
 <link href="genindex.html" rel="index" title="Index"/>
 <link href="Results.html" rel="next" title="Results"/>
-<link href="Preprocessing.html" rel="prev" title="Preprocessing"/>
+<link href="Data.html" rel="prev" title="Data"/>
 <script>
     <!-- Prevent Flash of wrong theme -->
       const userPreference = localStorage.getItem('darkMode');
@@ -72,7 +72,7 @@
 <div class="overflow-y-auto h-full w-full relative pr-6"><nav class="table w-full min-w-full my-6 lg:my-8">
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="Preprocessing.html">Preprocessing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Data.html">Data</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Results.html">Results</a></li>
 </ul>
@@ -99,16 +99,58 @@
 <div id="content" role="main">
 <section id="models">
 <h1>Models<a class="headerlink" href="#models" title="Link to this heading">¶</a></h1>
+<section id="overview-of-models">
+<h2>Overview of Models<a class="headerlink" href="#overview-of-models" title="Link to this heading" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#overview-of-models'">¶</a></h2>
+<p>We used multiple models with varying complexity levels to predict Airbnb listing prices. Below is an overview of the models selected for this project:</p>
+<ol class="arabic simple">
+<li><p><strong>Linear Regression</strong>: A standard linear regression model was chosen as the baseline for comparison with more sophisticated models. It represents the lowest complexity and is used for understanding the basic relationships between features and target variables.</p></li>
+<li><p><strong>Random Forest</strong>: A parallel tree-building method based on bagging, Random Forest is an ensemble method that uses multiple decision trees to make predictions. It is a robust and widely used model, particularly for regression and classification tasks citep{RandomForest}.</p></li>
+<li><p><strong>XGBoost</strong>: XGBoost is a gradient-boosting decision tree algorithm that builds trees sequentially. It typically outperforms Random Forest in many applications and is known for its speed and accuracy citep{Chen_2016}.</p></li>
+<li><p><strong>FT-Transformer</strong>: The FT-Transformer is a transformer-based model designed for tabular data. It is trained directly on the dataset and claims to outperform gradient-boosted decision tree models, particularly when large amounts of data are available citep{FTT}.</p></li>
+<li><p><strong>TabPFN</strong>: TabPFN is a prior-fitted transformer network trained on synthetic datasets to learn a general inference function for tabular data. Unlike other models, TabPFN does not require further training but can make predictions with a single forward pass citep{tabpfn}.</p></li>
+</ol>
+</section>
+<section id="explainability-with-shap">
+<h2>Explainability with SHAP<a class="headerlink" href="#explainability-with-shap" title="Link to this heading" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#explainability-with-shap'">¶</a></h2>
+<p>A key component of this study is to provide interpretability for the model predictions, especially to understand which features influence the price predictions. We focused on <strong>SHAP values</strong> as the method for model explainability, as it is model-agnostic and offers local interpretability of individual predictions.</p>
+<p>### What are SHAP Values?</p>
+<p>SHAP (Shapley Additive Explanations) values are based on Shapley values from cooperative game theory. SHAP values quantify the contribution of each feature to a model’s prediction by distributing the difference between the actual prediction and the average prediction fairly among all features citep{shap}.</p>
+<p>### Why SHAP?</p>
+<ul class="simple">
+<li><p><strong>Model Agnostic</strong>: SHAP values are compatible with any model, which allows for direct comparisons between different models.</p></li>
+<li><p><strong>Computationally Tractable</strong>: SHAP is efficient, requiring only one training run to compute feature contributions.</p></li>
+<li><p><strong>Local Interpretability</strong>: SHAP values offer an explanation of individual predictions, helping us to understand specific cases.</p></li>
+</ul>
+<p>### Model-Specific SHAP Explainers</p>
+<ul class="simple">
+<li><p><strong>Kernel SHAP</strong>: The kernel-based SHAP explainer is model-agnostic but struggles to model feature interactions and can fail when features are correlated.</p></li>
+<li><p><strong>Tree SHAP</strong>: Random Forest and XGBoost are compatible with the tree explainer, which models feature interactions more accurately by leveraging model-specific characteristics.</p></li>
+<li><p><strong>Deep SHAP</strong>: The deep SHAP explainer is useful for neural networks but is not compatible with TabPFN and FT-Transformer, as they do not backpropagate or violate SHAP’s additivity constraint.</p></li>
+</ul>
+<p>### Choice of Explainable Models</p>
+<p>Given the compatibility of Random Forest and XGBoost with the tree explainer, these models are prioritized when explainability is crucial for understanding feature importance.</p>
+</section>
 <section id="xgboost-regressor">
 <h2>XGBoost Regressor<a class="headerlink" href="#xgboost-regressor" title="Link to this heading" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#xgboost-regressor'">¶</a></h2>
-<p>An XGBoost Regressor model trained using a nested cross-validation.
-Additionally the features were explained using Shapley additive explanations (SHAP).</p>
+<p>The XGBoost Regressor was trained using nested cross-validation to optimize hyperparameters. This model was selected for its strong performance in regression tasks. After training, SHAP values were used to explain the model’s predictions, helping to identify the most important features driving price predictions.</p>
+</section>
+<section id="feature-importance-with-shap">
+<h2>Feature Importance with SHAP<a class="headerlink" href="#feature-importance-with-shap" title="Link to this heading" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#feature-importance-with-shap'">¶</a></h2>
+<p>The SHAP values provide insights into how the features influence the model’s predictions. In this section, we describe the SHAP-based feature importance for the XGBoost model, highlighting the top features that contribute most to the prediction of Airbnb listing prices.</p>
+<p>For example:
+- <strong>Distance to City Center</strong>: Listings closer to the city center generally command higher prices.
+- <strong>CLIP Prompt Features</strong>: The visual quality of images, as measured by CLIP cosine similarity, has a strong impact on listing prices.
+- <strong>Review Count</strong>: Listings with higher numbers of reviews tend to have a more established reputation, often correlating with higher prices.</p>
+<p>Further details on the SHAP values for other models and additional analysis can be found in the results section.</p>
 </section>
 </section>
 </div></div><aside class="hidden text-sm xl:block" id="right-sidebar">
 <div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
 <ul>
+<li><a :data-current="activeSection === '#overview-of-models'" class="reference internal" href="#overview-of-models">Overview of Models</a></li>
+<li><a :data-current="activeSection === '#explainability-with-shap'" class="reference internal" href="#explainability-with-shap">Explainability with SHAP</a></li>
 <li><a :data-current="activeSection === '#xgboost-regressor'" class="reference internal" href="#xgboost-regressor">XGBoost Regressor</a></li>
+<li><a :data-current="activeSection === '#feature-importance-with-shap'" class="reference internal" href="#feature-importance-with-shap">Feature Importance with SHAP</a></li>
 </ul>
 </div>
 </aside>
