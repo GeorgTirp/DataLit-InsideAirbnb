@@ -160,12 +160,8 @@ Unless otherwise specified, this project is licensed under the [MIT License](LIC
 ## Contact
 
 For questions, comments, or collaboration, you can reach us at:
-- **Name**: Georg Tirpitz  
-- **GitHub**: [@GeorgTirp](https://github.com/GeorgTirp)
-- **Name**: Nils Klute  
-- **GitHub**: [@NilsKlute](https://github.com/NilsKlute)
-- **Name**: Mathis Nommensen
-- **Github**: [@mathisnommensen](https://github.com/mathisnommensen)
+- **Name**: Georg Tirpitz, Nils Klute, Mathis Nommensen
+- **GitHub**: [@GeorgTirp](https://github.com/GeorgTirp), [@NilsKlute](https://github.com/NilsKlute), [@mathisnommensen](https://github.com/mathisnommensen)
 
 Feel free to open an [issue](https://github.com/GeorgTirp/DataLit-InsideAirbnb/issues) on GitHub if you encounter any problems or have feature requests.
 
