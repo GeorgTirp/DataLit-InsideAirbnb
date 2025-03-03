@@ -119,7 +119,7 @@ Below are some common workflows:
 
 3. **Visualization**:  
    - Look at the generated plots in `results/` or in the notebooks.
-   - The script `scripts/plotting.py` (if it exists) may produce advanced plots (e.g., raincloud plots).
+   - The script `visualization/` (if it exists) may produce advanced plots (e.g., raincloud plots).
 
 ---
 
