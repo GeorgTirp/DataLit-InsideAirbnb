@@ -166,6 +166,8 @@ For questions, comments, or collaboration, you can reach us at:
 - **GitHub**: [@GeorgTirp](https://github.com/GeorgTirp)
 - **Name**: Nils Klute  
 - **GitHub**: [@NilsKlute](https://github.com/NilsKlute)
+- **Name**: Mathis Nommensen
+- **Github**: [@mathisnommensen](https://github.com/mathisnommensen)
 
 Feel free to open an [issue](https://github.com/GeorgTirp/DataLit-InsideAirbnb/issues) on GitHub if you encounter any problems or have feature requests.
 
