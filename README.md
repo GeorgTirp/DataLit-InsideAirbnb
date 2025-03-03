@@ -63,7 +63,7 @@ DataLit-InsideAirbnb
 
 - **models**: All used models for prediction and code for model benchmarking.
 - **results/**: Outputs such as figures, metrics, model comparison files, etc.
-- **source/**: ???
+- **source/**: The source files of the Sphinx website documentation.
 - **environment.yml / requirements.txt**: Environment or package requirements.
 
 ---
@@ -159,8 +159,8 @@ Unless otherwise specified, this project is licensed under the [MIT License](LIC
 ## Contact
 
 For questions, comments, or collaboration, you can reach us at:
-- **Name**: Georg Tirpitz, Nils Klute, Mathis Nommensen
-- **GitHub**: [@GeorgTirp](https://github.com/GeorgTirp), [@NilsKlute](https://github.com/NilsKlute), [@mathisnommensen](https://github.com/mathisnommensen)
+- **Name**: Georg Tirpitz, Nils Klute, Mathis Nommensen, Frieder Wizgall
+- **GitHub**: [@GeorgTirp](https://github.com/GeorgTirp), [@NilsKlute](https://github.com/NilsKlute), [@mathisnommensen](https://github.com/mathisnommensen), [@WizgallF](https://github.com/WizgallF)
 
 Feel free to open an [issue](https://github.com/GeorgTirp/DataLit-InsideAirbnb/issues) on GitHub if you encounter any problems or have feature requests.
 
