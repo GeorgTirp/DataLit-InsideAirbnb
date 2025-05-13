@@ -137,7 +137,7 @@ Below are some common workflows:
   - Figures (e.g., `.png` or `.pdf`) for model comparison are stored in `results/`.
 
 - **Analysis Findings**:  
-  - Any discussion of the findings and our methods can be found in the written report.
+  - Any discussion of the findings and our methods can be found in the written [report](https://drive.google.com/file/d/1HWufPprnEjKcR1P959LfzattMTdJP0XJ/view?usp=sharing).
 
 ---
 
